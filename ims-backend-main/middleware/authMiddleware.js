@@ -12,13 +12,20 @@ require('dotenv').config();
 const auth = (requiredRole) => {
     return (req, res, next) => {
         try {
+            // SECURITY: Validate JWT_SECRET is properly configured
+            const JWT_SECRET = process.env.JWT_SECRET;
+            if (!JWT_SECRET || JWT_SECRET === 'sample-key-test-purposes' || JWT_SECRET.length < 32) {
+                console.error('SECURITY ERROR: JWT_SECRET is not properly configured!');
+                return res.status(500).json({ error: 'Server configuration error. Contact administrator.' });
+            }
+
             const authHeader = req.headers.authorization;
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
                 return res.status(401).json({ error: 'Authorization token missing.' });
             }
 
             const token = authHeader.split(' ')[1];
-            const payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+            const payload = jwt.verify(token, JWT_SECRET);
             req.user = payload;
 
             if (requiredRole) {

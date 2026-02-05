@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
 
@@ -23,6 +24,19 @@ const allowedOrigins = [
     'https://issue-engaged-anything-supporting.trycloudflare.com',
     process.env.FRONTEND_URL
 ].filter(Boolean);
+
+// SECURITY: Add security headers (fixes missing X-Frame-Options, CSP, etc.)
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "blob:"],
+        }
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -52,6 +66,9 @@ const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+
+// Apply rate limiting to login endpoint specifically
+app.use('/api/login', loginLimiter);
 
 // 3. Mount Routes
 // This prefixes all routes in that file with '/api'

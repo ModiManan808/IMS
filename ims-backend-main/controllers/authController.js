@@ -21,14 +21,14 @@ exports.login = async (req, res) => {
 
         const { username, password, userType } = validation.sanitized;
 
-        console.log('Login attempt:', { username, userType, hasPassword: !!password });
+        // Security: Removed verbose logging to prevent information leakage
 
         let user;
         let role;
 
         if (userType === 'admin') {
             user = await Admin.findOne({ where: { username } });
-            console.log('Admin lookup:', user ? `Found admin ID ${user.id}` : 'Admin not found');
+
             role = 'Admin';
         } else {
             // Intern login with applicationNo as username
@@ -49,21 +49,15 @@ exports.login = async (req, res) => {
         }
 
         if (!user) {
-            console.log('User not found');
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         // Verify password
-        console.log('Verifying password...');
         const isValidPassword = await verifyPassword(password, user.password);
-        console.log('Password verification result:', isValidPassword);
 
         if (!isValidPassword) {
-            console.log('Password verification failed');
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-
-        console.log('Login successful for:', username);
 
         // Generate JWT token
         const jwtSecret = process.env.JWT_SECRET;
