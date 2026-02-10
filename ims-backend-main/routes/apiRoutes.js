@@ -6,6 +6,7 @@ const appCtrl = require('../controllers/appController');
 const adminCtrl = require('../controllers/adminController');
 const internCtrl = require('../controllers/internController');
 const authCtrl = require('../controllers/authController');
+const fileCtrl = require('../controllers/fileController');
 const auth = require('../middleware/authMiddleware');
 
 // Rate Limiting for Login (S-03)
@@ -55,6 +56,11 @@ router.get('/admin/intern/:id', auth('Admin'), adminCtrl.getInternDetails);
 router.get('/intern/profile', auth('Intern'), internCtrl.getMyProfile);
 router.get('/intern/reports', auth('Intern'), internCtrl.getMyReports);
 router.post('/intern/report', auth('Intern'), internCtrl.submitDailyReport);
+
+// ==================== SECURE FILE DOWNLOAD ====================
+
+// Secure file download with JWT authentication
+router.get('/files/:filename', auth(), fileCtrl.downloadFile);
 
 // ==================== AUTH ROUTES ====================
 

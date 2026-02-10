@@ -10,59 +10,106 @@ require('dotenv').config();
  * Intern: applicationNo (username) + password
  */
 exports.login = async (req, res) => {
+    const logger = require('../utils/logger');
+
     try {
         // Validate and sanitize inputs
         const validation = Validator.validateLogin(req.body);
 
         if (!validation.valid) {
+            // Log validation errors for debugging, but return generic message
+            logger.warn('Login validation failed', {
+                errors: validation.errors,
+                ip: req.ip,
+                userAgent: req.get('user-agent')
+            });
+
             // Use generic error message to prevent user enumeration
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const { username, password, userType } = validation.sanitized;
 
-        // Security: Removed verbose logging to prevent information leakage
-
         let user;
         let role;
 
-        if (userType === 'admin') {
-            user = await Admin.findOne({ where: { username } });
+        // Database query with timeout handling
+        const queryTimeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Database query timeout')), 5000)
+        );
 
+        if (userType === 'admin') {
+            user = await Promise.race([
+                Admin.findOne({ where: { username } }),
+                queryTimeout
+            ]);
             role = 'Admin';
         } else {
             // Intern login with applicationNo as username
-            user = await Intern.findOne({ where: { applicationNo: username } });
+            user = await Promise.race([
+                Intern.findOne({ where: { applicationNo: username } }),
+                queryTimeout
+            ]);
 
-            if (!user) {
-                return res.status(401).json({ error: 'Invalid credentials' });
+            if (user) {
+                // Check if intern is approved and active
+                if (user.status !== 'Active' || user.role !== 'Intern_approved&ongoing') {
+                    logger.info('Inactive intern login attempt', {
+                        applicationNo: username,
+                        status: user.status,
+                        role: user.role
+                    });
+
+                    return res.status(403).json({
+                        error: 'Your account is not active. Please contact administrator.'
+                    });
+                }
+                role = user.role;
             }
-
-            // Check if intern is approved and active
-            if (user.status !== 'Active' || user.role !== 'Intern_approved&ongoing') {
-                return res.status(403).json({
-                    error: 'Your account is not active. Please contact administrator.'
-                });
-            }
-
-            role = user.role;
         }
 
         if (!user) {
+            logger.info('Login attempt for non-existent user', {
+                username,
+                userType,
+                ip: req.ip
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Verify password
-        const isValidPassword = await verifyPassword(password, user.password);
+        // Verify password with timeout protection
+        const passwordTimeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Password verification timeout')), 3000)
+        );
+
+        let isValidPassword;
+        try {
+            isValidPassword = await Promise.race([
+                verifyPassword(password, user.password),
+                passwordTimeout
+            ]);
+        } catch (error) {
+            logger.error('Password verification error', {
+                error: error.message,
+                username,
+                userType
+            });
+            return res.status(500).json({ error: 'Authentication service temporarily unavailable' });
+        }
 
         if (!isValidPassword) {
+            logger.info('Invalid password attempt', {
+                username,
+                userType,
+                ip: req.ip
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         // Generate JWT token
         const jwtSecret = process.env.JWT_SECRET;
         if (!jwtSecret) {
-            console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables');
+            logger.error('FATAL: JWT_SECRET is not defined in environment variables');
             return res.status(500).json({ error: 'Server configuration error. Contact administrator.' });
         }
 
@@ -95,13 +142,26 @@ exports.login = async (req, res) => {
                 status: user.status
             };
 
+        logger.info('Successful login', {
+            userId: user.id,
+            userType,
+            ip: req.ip
+        });
+
         res.json({
             message: 'Login successful',
             token,
             user: userInfo
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        logger.error('Login error', {
+            error: error.message,
+            stack: error.stack,
+            ip: req.ip
+        });
+
+        // Don't expose internal errors to client
+        res.status(500).json({ error: 'An error occurred during login. Please try again.' });
     }
 };
 

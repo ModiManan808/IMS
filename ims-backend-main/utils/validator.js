@@ -141,9 +141,13 @@ class Validator {
             errors.push('Invalid username format');
         }
 
-        // Password (don't sanitize, just check presence)
+        // Password (don't sanitize, just check presence and length)
+        // SECURITY: Enforce maximum password length to prevent bcrypt DoS attack
+        // bcrypt can take a very long time to hash extremely long strings, freezing the CPU
         if (!data.password || typeof data.password !== 'string' || data.password.length < 1) {
             errors.push('Password is required');
+        } else if (data.password.length > 128) {
+            errors.push('Password is too long (maximum 128 characters)');
         } else {
             sanitized.password = data.password; // Keep as-is for bcrypt comparison
         }

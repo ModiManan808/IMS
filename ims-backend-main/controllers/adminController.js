@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
 const Validator = require('../utils/validator');
+const logger = require('../utils/logger');
 
 // Tab 1: Fresh Applications
 exports.getFreshApplications = async (req, res) => {
@@ -41,46 +42,50 @@ exports.decideOnFresh = async (req, res) => {
         }
 
         if (decision === 'Approved') {
-            // Send Email with Enrollment Link and NDA
+            // Update status immediately (non-blocking)
+            intern.status = 'Pending_Enrollment';
+            await intern.save();
+
+            // SECURITY: Send email in background (fire-and-forget)
+            // This prevents slow SMTP servers from blocking the HTTP response
             const frontendUrl = process.env.FRONTEND_URL || 'https://portal.nfsu.ac.in';
             const enrollmentLink = `${frontendUrl}/enroll/${intern.id}`;
-
-            // NDA file path (assuming it's stored in uploads/nda/nda.pdf)
-            // Note: You need to place the NDA template PDF in this location
             const ndaPath = path.join(__dirname, '../uploads/nda/nda.pdf');
 
-            // Check if NDA file exists before attaching
-            let emailText = `Dear ${intern.fullName},\n\nYour application has been approved. Please complete your enrollment by clicking the link below:\n\n${enrollmentLink}\n\n`;
+            // Fire-and-forget email sending
+            (async () => {
+                try {
+                    let emailText = `Dear ${intern.fullName},\n\nYour application has been approved. Please complete your enrollment by clicking the link below:\n\n${enrollmentLink}\n\n`;
 
-            try {
-                if (fs.existsSync(ndaPath)) {
-                    emailText += `Please download and sign the attached NDA document and upload it during enrollment.\n\n`;
-                    await sendEmail(
-                        intern.personalEmail,
-                        'Application Approved - Complete Your Enrollment',
-                        emailText,
-                        null, // HTML (optional)
-                        ndaPath // Attach NDA PDF
-                    );
-                } else {
-                    emailText += `Please download the NDA document from the portal and upload it during enrollment.\n\n`;
-                    await sendEmail(
-                        intern.personalEmail,
-                        'Application Approved - Complete Your Enrollment',
-                        emailText
-                    );
+                    if (fs.existsSync(ndaPath)) {
+                        emailText += `Please download and sign the attached NDA document and upload it during enrollment.\n\n`;
+                        await sendEmail(
+                            intern.personalEmail,
+                            'Application Approved - Complete Your Enrollment',
+                            emailText,
+                            null,
+                            ndaPath
+                        );
+                    } else {
+                        emailText += `Please download the NDA document from the portal and upload it during enrollment.\n\n`;
+                        await sendEmail(
+                            intern.personalEmail,
+                            'Application Approved - Complete Your Enrollment',
+                            emailText
+                        );
+                    }
+
+                    logger.info('Approval email sent successfully', { internId: intern.id, email: intern.personalEmail });
+                } catch (emailError) {
+                    // Log error but don't fail the request
+                    logger.error('Failed to send approval email', {
+                        internId: intern.id,
+                        email: intern.personalEmail,
+                        error: emailError.message
+                    });
                 }
+            })();
 
-                // Only update status AFTER successful email send
-                intern.status = 'Pending_Enrollment';
-                await intern.save();
-            } catch (emailError) {
-                // Email failed, don't update status
-                return res.status(500).json({
-                    error: 'Failed to send approval email. Status not changed. Please try again.',
-                    details: emailError.message
-                });
-            }
         } else if (decision === 'Rejected') {
             intern.status = 'Rejected';
             intern.role = 'Intern_rejected';
@@ -94,7 +99,8 @@ exports.decideOnFresh = async (req, res) => {
 
         res.json({ message: 'Status updated successfully' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        logger.error('Error in decideOnFresh', { error: error.message, stack: error.stack });
+        res.status(500).json({ error: 'An error occurred while processing your request' });
     }
 };
 
@@ -145,7 +151,7 @@ exports.finalizeOnboarding = async (req, res) => {
         const randomPassword = generateRandomPassword();
         const hashedPassword = await hashPassword(randomPassword);
 
-        // Update intern
+        // Update intern immediately (don't wait for email)
         intern.applicationNo = applicationNo;
         intern.dateOfJoining = dateOfJoining;
         intern.dateOfLeaving = dateOfLeaving;
@@ -154,56 +160,69 @@ exports.finalizeOnboarding = async (req, res) => {
         intern.role = 'Intern_approved&ongoing';
         await intern.save();
 
-        // Send login credentials to intern
+        // SECURITY: Send emails in background (fire-and-forget)
+        // This prevents slow SMTP servers from blocking the HTTP response
         const loginUrl = `${process.env.FRONTEND_URL || 'https://portal.nfsu.ac.in'}/login`;
 
-        try {
-            await sendEmail(
-                intern.personalEmail,
-                'Internship Approved - Login Credentials',
-                `Dear ${intern.fullName},\n\nYour internship has been approved!\n\nYour login credentials:\nUsername: ${applicationNo}\nPassword: ${randomPassword}\n\nPlease login at: ${loginUrl}\n\nApplication No: ${applicationNo}\nDate of Joining: ${dateOfJoining}\nDate of Leaving: ${dateOfLeaving}\n\nBest regards,\nCoE-CS Team`
-            );
-
-            // Send notification to CoE-CS Head, Dean, and Associate Dean
-            const recipients = [
-                process.env.COE_CS_HEAD_EMAIL || 'head.coecs@nfsu.ac.in',
-                process.env.DEAN_EMAIL || 'dean@nfsu.ac.in',
-                process.env.ASSOCIATE_DEAN_EMAIL || 'associate.dean@nfsu.ac.in'
-            ];
-
-            const notificationMessage = `A new intern has been onboarded:\n\n` +
-                `Name: ${intern.fullName}\n` +
-                `Application No: ${applicationNo}\n` +
-                `Enrollment No: ${intern.enrollmentNo}\n` +
-                `Date of Joining: ${dateOfJoining}\n` +
-                `Date of Leaving: ${dateOfLeaving}\n` +
-                `Program: ${intern.program}\n` +
-                `Department: ${intern.department}\n\n` +
-                `Best regards,\nIMS System`;
-
-            for (const recipient of recipients) {
+        // Fire-and-forget email sending
+        (async () => {
+            try {
+                // Send credentials to intern
                 await sendEmail(
-                    recipient,
-                    `New Intern Onboarded - ${intern.fullName}`,
-                    notificationMessage
+                    intern.personalEmail,
+                    'Internship Approved - Login Credentials',
+                    `Dear ${intern.fullName},\n\nYour internship has been approved!\n\nYour login credentials:\nUsername: ${applicationNo}\nPassword: ${randomPassword}\n\nPlease login at: ${loginUrl}\n\nApplication No: ${applicationNo}\nDate of Joining: ${dateOfJoining}\nDate of Leaving: ${dateOfLeaving}\n\nBest regards,\nCoE-CS Team`
                 );
-            }
-        } catch (emailError) {
-            // Email failed, rollback the status change
-            intern.status = 'Pending_Approval';
-            intern.role = null;
-            intern.password = null;
-            await intern.save();
 
-            return res.status(500).json({
-                error: 'Failed to send onboarding emails. Status rolled back. Please try again.',
-                details: emailError.message
-            });
-        }
+                logger.info('Onboarding credentials email sent', { internId: intern.id, email: intern.personalEmail });
+
+                // Send notification emails to admin staff
+                const recipients = [
+                    process.env.COE_CS_HEAD_EMAIL || 'head.coecs@nfsu.ac.in',
+                    process.env.DEAN_EMAIL || 'dean@nfsu.ac.in',
+                    process.env.ASSOCIATE_DEAN_EMAIL || 'associate.dean@nfsu.ac.in'
+                ];
+
+                const notificationMessage = `A new intern has been onboarded:\n\n` +
+                    `Name: ${intern.fullName}\n` +
+                    `Application No: ${applicationNo}\n` +
+                    `Enrollment No: ${intern.enrollmentNo}\n` +
+                    `Date of Joining: ${dateOfJoining}\n` +
+                    `Date of Leaving: ${dateOfLeaving}\n` +
+                    `Program: ${intern.program}\n` +
+                    `Department: ${intern.department}\n\n` +
+                    `Best regards,\nIMS System`;
+
+                for (const recipient of recipients) {
+                    try {
+                        await sendEmail(
+                            recipient,
+                            `New Intern Onboarded - ${intern.fullName}`,
+                            notificationMessage
+                        );
+                        logger.info('Notification email sent', { recipient, internId: intern.id });
+                    } catch (notifyError) {
+                        logger.error('Failed to send notification email', {
+                            recipient,
+                            internId: intern.id,
+                            error: notifyError.message
+                        });
+                    }
+                }
+            } catch (emailError) {
+                // Log error but don't fail the request
+                logger.error('Failed to send onboarding emails', {
+                    internId: intern.id,
+                    email: intern.personalEmail,
+                    error: emailError.message
+                });
+            }
+        })();
 
         res.json({ message: 'Intern onboarded successfully' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        logger.error('Error in finalizeOnboarding', { error: error.message, stack: error.stack });
+        res.status(500).json({ error: 'An error occurred while processing your request' });
     }
 };
 
