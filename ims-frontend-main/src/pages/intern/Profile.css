@@ -106,3 +106,23 @@
     font-size: 18px;
     color: #666;
 }
+/* Change Password Section */
+.password-section { background: #f9f9f9; padding: 25px 30px; border-top: 1px solid #e0e0e0; }
+.change-password-toggle { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 500; transition: all 0.3s ease; width: 100%; }
+.change-password-toggle:hover { background: #5568d3; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3); }
+.change-password-form { margin-top: 20px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.change-password-form .form-group { margin-bottom: 20px; }
+.change-password-form label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px; }
+.change-password-form input[type='password'], .change-password-form input[type='text'] { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: border-color 0.3s ease; }
+.change-password-form input:focus { outline: none; border-color: #667eea; }
+.checkbox-label { display: flex; align-items: center; gap: 8px; font-weight: normal !important; cursor: pointer; }
+.checkbox-label input[type='checkbox'] { width: auto; cursor: pointer; }
+.password-strength { margin-top: 8px; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; text-transform: capitalize; }
+.password-strength-weak { background: #ffebee; color: #c62828; }
+.password-strength-medium { background: #fff3e0; color: #ef6c00; }
+.password-strength-strong { background: #e8f5e9; color: #2e7d32; }
+.submit-button { width: 100%; background: #667eea; color: white; border: none; padding: 14px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.3s ease; margin-top: 10px; }
+.submit-button:hover:not(:disabled) { background: #5568d3; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+.submit-button:disabled { opacity: 0.6; cursor: not-allowed; }
+.error-message { background: #ffebee; color: #c62828; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; border-left: 4px solid #c62828; }
+.success-message { background: #e8f5e9; color: #2e7d32; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; border-left: 4px solid #2e7d32; }
