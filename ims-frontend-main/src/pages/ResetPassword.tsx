@@ -37,9 +37,15 @@ const ResetPassword: React.FC = () => {
         e.preventDefault();
         setError('');
 
-        // Validation
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters long');
+        // VUL-07: Match backend password complexity rules
+        const pwdErrors: string[] = [];
+        if (password.length < 8) pwdErrors.push('at least 8 characters');
+        if (!/[A-Z]/.test(password)) pwdErrors.push('one uppercase letter');
+        if (!/[a-z]/.test(password)) pwdErrors.push('one lowercase letter');
+        if (!/[0-9]/.test(password)) pwdErrors.push('one number');
+        if (!/[^A-Za-z0-9]/.test(password)) pwdErrors.push('one special character (e.g. !@#$%)');
+        if (pwdErrors.length > 0) {
+            setError(`Password must contain: ${pwdErrors.join(', ')}`);
             return;
         }
 
@@ -67,10 +73,16 @@ const ResetPassword: React.FC = () => {
         }
     };
 
-    const getPasswordStrength = () => {
+    const getPasswordStrength = (): string => {
         if (password.length === 0) return '';
-        if (password.length < 8) return 'weak';
-        if (password.length < 12) return 'medium';
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[a-z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        if (score <= 2) return 'weak';
+        if (score <= 4) return 'medium';
         return 'strong';
     };
 
@@ -158,6 +170,7 @@ const ResetPassword: React.FC = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
+                                    autoComplete="new-password"
                                     className="form-input"
                                 />
                                 <button
@@ -180,6 +193,7 @@ const ResetPassword: React.FC = () => {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
+                                    autoComplete="new-password"
                                     className="form-input"
                                 />
                             </div>

@@ -37,7 +37,7 @@ const passwordResetLimiter = rateLimit({
 });
 
 router.post('/request-password-reset', passwordResetLimiter, authCtrl.requestPasswordReset);
-router.get('/verify-reset-token/:token', authCtrl.verifyResetToken);
+router.get('/verify-reset-token/:token', passwordResetLimiter, authCtrl.verifyResetToken);
 router.post('/reset-password/:token', authCtrl.resetPassword);
 
 // Change Password (authenticated users only) - with rate limiting

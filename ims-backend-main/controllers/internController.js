@@ -226,7 +226,7 @@ exports.getMyProfile = async (req, res) => {
                 'id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo',
                 'applicationNo', 'semester', 'program', 'department', 'organization',
                 'gender', 'bloodGroup', 'presentAddress', 'permanentAddress',
-                'dateOfJoining', 'dateOfLeaving', 'status', 'role'
+                'passportPhoto', 'dateOfJoining', 'dateOfLeaving', 'status', 'role'
             ]
         });
 

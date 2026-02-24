@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { internService } from '../services/internService';
+import { CheckCircle } from 'lucide-react';
 import './ApplicationForm.css';
 
 const ApplicationForm: React.FC = () => {
@@ -67,7 +68,7 @@ const ApplicationForm: React.FC = () => {
     return (
       <div className="application-success">
         <div className="success-content">
-          <h2>✅ Application Submitted Successfully!</h2>
+          <h2><CheckCircle size={28} color="#4caf50" aria-hidden="true" /> Application Submitted Successfully!</h2>
           <p>Your application has been received. You will receive an email once it's reviewed.</p>
           <p>Redirecting to login...</p>
         </div>

@@ -4,6 +4,8 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import HomePage from './pages/HomePage';
 import ApplicationForm from './pages/ApplicationForm';
 import EnrollmentForm from './pages/EnrollmentForm';
@@ -53,7 +55,8 @@ const AppContent: React.FC = () => {
     localStorage.setItem('sidebarOpen', JSON.stringify(sidebarOpen));
   }, [sidebarOpen]);
 
-  const showLayout = authState.isAuthenticated && authState.user;
+  const isEnrollmentPage = location.pathname.startsWith('/enroll/');
+  const showLayout = authState.isAuthenticated && authState.user && !isEnrollmentPage;
 
   return (
     <div className="app">
@@ -67,6 +70,8 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={authState.isAuthenticated ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/fresh' : '/intern/dashboard'} /> : <Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/apply" element={<ApplicationForm />} />
           <Route path="/enroll/:id" element={<EnrollmentForm />} />
 

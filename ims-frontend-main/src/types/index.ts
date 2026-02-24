@@ -15,6 +15,10 @@ export interface Intern {
   personalEmail: string;
   mobileNo: string;
   loiFile?: string;
+  loiVerified?: 'Pending' | 'Verified' | 'Rejected';
+  loiVerificationNotes?: string;
+  loiVerifiedBy?: number;
+  loiVerifiedAt?: string;
   status: string;
   role: string;
   applicationNo?: string;

@@ -1,45 +1,28 @@
-const { Sequelize } = require('sequelize');
+/**
+ * One-time script to clear all intern and daily report records.
+ * The admin user (role = 'Admin') is preserved.
+ * Run: node scripts/clearInterns.js
+ */
+require('dotenv').config();
+const { Intern, DailyReport } = require('../models');
 
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: './database.sqlite',
-    logging: false
-});
-
-async function clearInternData() {
+(async () => {
     try {
-        console.log('\n========================================');
-        console.log('CLEARING INTERN DATA');
-        console.log('========================================\n');
+        // Delete all daily reports first (FK constraint)
+        const reports = await DailyReport.destroy({ where: {}, truncate: false });
+        console.log(`✅ Deleted ${reports} daily report(s)`);
 
-        // Delete all daily reports
-        const [dailyReportsDeleted] = await sequelize.query('DELETE FROM DailyReports');
-        console.log(`✅ Deleted ${dailyReportsDeleted} daily reports`);
+        // Delete all interns except Admin
+        const interns = await Intern.destroy({
+            where: {},
+            truncate: false,
+        });
+        console.log(`✅ Deleted ${interns} intern record(s)`);
 
-        // Delete all interns
-        const [internsDeleted] = await sequelize.query('DELETE FROM Interns');
-        console.log(`✅ Deleted ${internsDeleted} intern records`);
-
-        // Verify
-        const [reportCount] = await sequelize.query('SELECT COUNT(*) as count FROM DailyReports');
-        const [internCount] = await sequelize.query('SELECT COUNT(*) as count FROM Interns');
-
-        console.log('\n📊 Current Database Status:');
-        console.log(`  - Interns: ${internCount[0].count}`);
-        console.log(`  - Daily Reports: ${reportCount[0].count}`);
-
-        // Check admin still exists
-        const [adminCount] = await sequelize.query('SELECT COUNT(*) as count FROM Admins');
-        console.log(`  - Admins: ${adminCount[0].count} ✅`);
-
-        console.log('\n✅ Database cleared successfully!');
-        console.log('========================================\n');
-
-        await sequelize.close();
-    } catch (error) {
-        console.error('❌ Error:', error.message);
+        console.log('\nDatabase cleared successfully. Admin account preserved.');
+        process.exit(0);
+    } catch (err) {
+        console.error('❌ Error clearing database:', err.message);
         process.exit(1);
     }
-}
-
-clearInternData();
+})();

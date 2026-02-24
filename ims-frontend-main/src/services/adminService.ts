@@ -14,6 +14,12 @@ export interface AdminOnboardRequest {
   dateOfLeaving: string;
 }
 
+export interface LOIVerificationRequest {
+  id: number;
+  loiVerified: 'Pending' | 'Verified' | 'Rejected';
+  loiVerificationNotes?: string;
+}
+
 export const adminService = {
   getFreshApplications: async () => {
     return api.get('/admin/dashboard/fresh');
@@ -41,6 +47,10 @@ export const adminService = {
 
   finalizeOnboarding: async (data: AdminOnboardRequest) => {
     return api.post('/admin/onboard', data);
+  },
+
+  verifyLOI: async (data: LOIVerificationRequest) => {
+    return api.post('/admin/verify-loi', data);
   },
 
   getInternDetails: async (id: number) => {

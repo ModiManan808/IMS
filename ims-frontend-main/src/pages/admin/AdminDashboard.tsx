@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
+import { FilePlus, Clock, CheckCircle, XCircle, GraduationCap } from 'lucide-react';
 import './AdminDashboard.css';
 
 const AdminDashboard: React.FC = () => {
@@ -44,35 +45,35 @@ const AdminDashboard: React.FC = () => {
       <h1>Admin Dashboard</h1>
       <div className="stats-grid">
         <div className="stat-card fresh">
-          <div className="stat-icon">🆕</div>
+          <div className="stat-icon"><FilePlus size={28} aria-hidden="true" /></div>
           <div className="stat-info">
             <h3>Fresh</h3>
             <p className="stat-number">{freshCount}</p>
           </div>
         </div>
         <div className="stat-card pending">
-          <div className="stat-icon">⏳</div>
+          <div className="stat-icon"><Clock size={28} aria-hidden="true" /></div>
           <div className="stat-info">
             <h3>Pending</h3>
             <p className="stat-number">{pendingCount}</p>
           </div>
         </div>
         <div className="stat-card ongoing">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon"><CheckCircle size={28} aria-hidden="true" /></div>
           <div className="stat-info">
             <h3>Approved & Ongoing</h3>
             <p className="stat-number">{ongoingCount}</p>
           </div>
         </div>
         <div className="stat-card rejected">
-          <div className="stat-icon">❌</div>
+          <div className="stat-icon"><XCircle size={28} aria-hidden="true" /></div>
           <div className="stat-info">
             <h3>Rejected</h3>
             <p className="stat-number">{rejectedCount}</p>
           </div>
         </div>
         <div className="stat-card completed">
-          <div className="stat-icon">🎓</div>
+          <div className="stat-icon"><GraduationCap size={28} aria-hidden="true" /></div>
           <div className="stat-info">
             <h3>Completed</h3>
             <p className="stat-number">{completedCount}</p>

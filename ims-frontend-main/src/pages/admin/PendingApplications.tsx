@@ -113,6 +113,7 @@ const PendingApplications: React.FC = () => {
               <input
                 type="date"
                 value={formData.dateOfJoining}
+                min={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setFormData({ ...formData, dateOfJoining: e.target.value })}
                 required
               />
@@ -122,15 +123,16 @@ const PendingApplications: React.FC = () => {
               <input
                 type="date"
                 value={formData.dateOfLeaving}
+                min={formData.dateOfJoining || new Date().toISOString().split('T')[0]}
                 onChange={(e) => setFormData({ ...formData, dateOfLeaving: e.target.value })}
                 required
               />
             </div>
             <div className="modal-actions">
-              <button onClick={handleOnboard} className="submit-button">
+              <button onClick={handleOnboard} className="modal-submit-btn">
                 Approve
               </button>
-              <button onClick={() => setSelectedId(null)} className="cancel-button">
+              <button onClick={() => setSelectedId(null)} className="modal-cancel-btn">
                 Cancel
               </button>
             </div>

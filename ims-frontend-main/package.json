@@ -14,6 +14,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.13.2",
     "cross-env": "^10.1.0",
+    "lucide-react": "^0.575.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.12.0",

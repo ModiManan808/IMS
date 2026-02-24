@@ -187,8 +187,11 @@ class Validator {
             errors.push('Invalid decision value');
         }
 
-        // Rejection Reason (optional but sanitized)
+        // Rejection Reason (required when decision is Rejected)
         sanitized.rejectionReason = Sanitizer.sanitizeText(data.rejectionReason, 1000);
+        if (sanitized.decision === 'Rejected' && !sanitized.rejectionReason) {
+            errors.push('Rejection reason is required when rejecting an application');
+        }
 
         // Special Approval Notes (optional but sanitized)
         sanitized.specialApprovalNotes = Sanitizer.sanitizeText(data.specialApprovalNotes, 1000);
@@ -238,6 +241,15 @@ class Validator {
             const joining = new Date(sanitized.dateOfJoining);
             const leaving = new Date(sanitized.dateOfLeaving);
 
+            // Get today at midnight (no time part) for fair comparison
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            joining.setHours(0, 0, 0, 0);
+
+            if (joining < today) {
+                errors.push('Date of joining cannot be in the past');
+            }
+
             if (leaving <= joining) {
                 errors.push('Date of leaving must be after date of joining');
             }
@@ -276,6 +288,38 @@ class Validator {
 
         // Issues Faced (optional, max 2000 chars)
         sanitized.issuesFaced = Sanitizer.sanitizeText(data.issuesFaced, 2000);
+
+        return {
+            valid: errors.length === 0,
+            sanitized,
+            errors
+        };
+    }
+
+    /**
+     * Validate LOI verification
+     * @param {object} data - LOI verification data
+     * @returns {object} - { valid: boolean, sanitized: object, errors: array }
+     */
+    static validateLOIVerification(data) {
+        const errors = [];
+        const sanitized = {};
+
+        // ID (required)
+        sanitized.id = Sanitizer.sanitizeId(data.id);
+        if (!sanitized.id) {
+            errors.push('Invalid intern ID');
+        }
+
+        // LOI Verified status (enum)
+        const validStatuses = ['Pending', 'Verified', 'Rejected'];
+        sanitized.loiVerified = Sanitizer.sanitizeEnum(data.loiVerified, validStatuses);
+        if (!sanitized.loiVerified) {
+            errors.push('Invalid verification status');
+        }
+
+        // Verification Notes (optional but sanitized)
+        sanitized.loiVerificationNotes = Sanitizer.sanitizeText(data.loiVerificationNotes, 1000);
 
         return {
             valid: errors.length === 0,

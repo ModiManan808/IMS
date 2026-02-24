@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { Intern } from '../../types';
+import { CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
 import './FreshApplications.css';
 
 const FreshApplications: React.FC = () => {
@@ -32,8 +33,12 @@ const FreshApplications: React.FC = () => {
   const handleDecision = async () => {
     if (!selectedId) return;
 
-    // Confirmation for rejection
+    // Require reason before rejecting
     if (decision === 'Rejected') {
+      if (!rejectionReason.trim()) {
+        alert('Please provide a rejection reason. The intern will receive this in their email.');
+        return;
+      }
       if (!window.confirm('Are you sure you want to reject this application? This action cannot be undone.')) {
         return;
       }
@@ -112,11 +117,11 @@ const FreshApplications: React.FC = () => {
   const getLoiBadge = (status?: string) => {
     switch (status) {
       case 'Verified':
-        return <span className="loi-badge verified">✅ LOI Verified</span>;
+        return <span className="loi-badge verified"><CheckCircle size={14} aria-hidden="true" /> LOI Verified</span>;
       case 'Rejected':
-        return <span className="loi-badge rejected">❌ LOI Rejected</span>;
+        return <span className="loi-badge rejected"><XCircle size={14} aria-hidden="true" /> LOI Rejected</span>;
       default:
-        return <span className="loi-badge pending">⏳ LOI Pending</span>;
+        return <span className="loi-badge pending"><Clock size={14} aria-hidden="true" /> LOI Pending</span>;
     }
   };
 
@@ -176,7 +181,7 @@ const FreshApplications: React.FC = () => {
                       onClick={() => app.loiFile && handleViewLOI(app.loiFile)}
                       className="view-loi-button"
                     >
-                      📄 View LOI Document
+                      <FileText size={16} aria-hidden="true" /> View LOI Document
                     </button>
                   </div>
                 )}
@@ -187,9 +192,9 @@ const FreshApplications: React.FC = () => {
                     onChange={(e) => setLoiVerified(e.target.value as any)}
                     className="form-select"
                   >
-                    <option value="Pending">⏳ Pending</option>
-                    <option value="Verified">✅ Verified</option>
-                    <option value="Rejected">❌ Rejected</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Verified">Verified</option>
+                    <option value="Rejected">Rejected</option>
                   </select>
                 </div>
                 <div className="form-group">
@@ -245,11 +250,13 @@ const FreshApplications: React.FC = () => {
               </div>
               {decision === 'Rejected' && (
                 <div className="form-group">
-                  <label>Rejection Reason</label>
+                  <label>Rejection Reason *</label>
                   <textarea
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
                     rows={3}
+                    placeholder="Provide a clear reason — the intern will receive this in their notification email..."
+                    required
                   />
                 </div>
               )}
@@ -264,10 +271,10 @@ const FreshApplications: React.FC = () => {
                 </div>
               )}
               <div className="modal-actions">
-                <button onClick={handleDecision} className="submit-button" disabled={submitting}>
+                <button onClick={handleDecision} className="modal-submit-btn" disabled={submitting}>
                   {submitting ? 'Submitting...' : 'Submit Decision'}
                 </button>
-                <button onClick={() => setSelectedId(null)} className="cancel-button" disabled={submitting}>
+                <button onClick={() => setSelectedId(null)} className="modal-cancel-btn" disabled={submitting}>
                   Cancel
                 </button>
               </div>

@@ -8,14 +8,23 @@ const Intern = sequelize.define('Intern', {
     personalEmail: { type: DataTypes.STRING, allowNull: false, unique: true },
     mobileNo: { type: DataTypes.STRING, allowNull: false },
     loiFile: { type: DataTypes.STRING, allowNull: false }, // File Path
-    
+
+    // LOI Verification
+    loiVerified: {
+        type: DataTypes.ENUM('Pending', 'Verified', 'Rejected'),
+        defaultValue: 'Pending'
+    },
+    loiVerificationNotes: { type: DataTypes.TEXT },
+    loiVerifiedBy: { type: DataTypes.INTEGER }, // Admin ID who verified
+    loiVerifiedAt: { type: DataTypes.DATE },
+
     // Status & Roles
-    status: { 
+    status: {
         type: DataTypes.ENUM,
         values: ['Fresh', 'Special_Approval_Required', 'Pending_Enrollment', 'Pending_Approval', 'Active', 'Rejected', 'Completed'],
         defaultValue: 'Fresh'
     },
-    role: { 
+    role: {
         type: DataTypes.ENUM,
         values: ['Intern_applied', 'Intern_rejected', 'Intern_approved&ongoing', 'Intern_completed'],
         defaultValue: 'Intern_applied'

@@ -4,6 +4,43 @@ const { verifyPassword } = require('../utils/passwordService');
 const Validator = require('../utils/validator');
 require('dotenv').config();
 
+// =====================================================================
+// VUL-04: JWT Token Blacklist (in-memory, auto-expires after 7 days)
+// For production with multiple nodes, replace with Redis.
+// =====================================================================
+const tokenBlacklist = new Set();
+
+exports.isTokenBlacklisted = (token) => tokenBlacklist.has(token);
+
+// =====================================================================
+// VUL-07: Password Strength Validator
+// Enforced on: resetPassword, changePassword
+// =====================================================================
+function validatePasswordStrength(password) {
+    if (!password || typeof password !== 'string') {
+        return { valid: false, message: 'Password is required' };
+    }
+    if (password.length < 8) {
+        return { valid: false, message: 'Password must be at least 8 characters long' };
+    }
+    if (password.length > 128) {
+        return { valid: false, message: 'Password is too long (maximum 128 characters)' };
+    }
+    if (!/[A-Z]/.test(password)) {
+        return { valid: false, message: 'Password must contain at least one uppercase letter' };
+    }
+    if (!/[a-z]/.test(password)) {
+        return { valid: false, message: 'Password must contain at least one lowercase letter' };
+    }
+    if (!/[0-9]/.test(password)) {
+        return { valid: false, message: 'Password must contain at least one number' };
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        return { valid: false, message: 'Password must contain at least one special character (e.g. !@#$%^&*)' };
+    }
+    return { valid: true };
+}
+
 /**
  * Login for both Admin and Intern
  * Admin: username + password
@@ -342,8 +379,10 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ error: 'Token is required' });
         }
 
-        if (!password || password.length < 8) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+        // VUL-07: Enforce strong password policy
+        const strength = validatePasswordStrength(password);
+        if (!strength.valid) {
+            return res.status(400).json({ error: strength.message });
         }
 
         const resetToken = await PasswordReset.findOne({
@@ -408,8 +447,14 @@ exports.resetPassword = async (req, res) => {
  * Logout (client-side token removal, but can add token blacklist here)
  */
 exports.logout = async (req, res) => {
-    // In a stateless JWT system, logout is handled client-side by removing the token
-    // For enhanced security, you could implement a token blacklist here
+    // VUL-04: Blacklist the token so it cannot be reused after logout
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        tokenBlacklist.add(token);
+        // Auto-cleanup after 7 days to prevent unbounded memory growth
+        setTimeout(() => tokenBlacklist.delete(token), 7 * 24 * 60 * 60 * 1000);
+    }
     res.json({ message: 'Logged out successfully' });
 };
 
@@ -432,8 +477,10 @@ exports.changePassword = async (req, res) => {
             return res.status(400).json({ error: 'Current password and new password are required' });
         }
 
-        if (newPassword.length < 8) {
-            return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+        // VUL-07: Enforce strong password policy
+        const strength = validatePasswordStrength(newPassword);
+        if (!strength.valid) {
+            return res.status(400).json({ error: strength.message });
         }
 
         // Fetch user from database based on userType

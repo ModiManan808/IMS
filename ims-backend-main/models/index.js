@@ -2,6 +2,7 @@ const sequelize = require('../config/database');
 const Intern = require('./Intern');
 const DailyReport = require('./DailyReport');
 const Admin = require('./Admin');
+const PasswordReset = require('./PasswordReset');
 
 // Relation: One Intern has Many Reports
 Intern.hasMany(DailyReport, { foreignKey: 'internId', as: 'reports' });
@@ -19,4 +20,4 @@ const initDB = async () => {
     }
 };
 
-module.exports = { Intern, DailyReport, Admin, initDB };
+module.exports = { Intern, DailyReport, Admin, PasswordReset, initDB };

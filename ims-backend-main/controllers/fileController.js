@@ -13,24 +13,27 @@ const logger = require('../utils/logger');
  */
 exports.downloadFile = async (req, res) => {
     try {
-        const { filename } = req.params;
+        // Extract the full path from wildcard route match
+        const filename = req.params[0];
         const user = req.user; // Set by authMiddleware
 
-        // Sanitize filename to prevent directory traversal
-        const sanitizedFilename = path.basename(filename);
+        // Decode the filename in case it's URL encoded
+        const decodedFilename = decodeURIComponent(filename);
 
-        if (sanitizedFilename !== filename) {
+        // Prevent directory traversal attacks
+        // Allow slashes for subdirectories but prevent .. and other malicious patterns
+        if (decodedFilename.includes('..') || decodedFilename.startsWith('/') || decodedFilename.startsWith('\\')) {
             logger.warn(`Directory traversal attempt detected: ${filename} by user ${user.id}`);
             return res.status(403).json({ error: 'Access denied' });
         }
 
         // Construct safe file path
         const uploadsDir = path.join(__dirname, '../uploads');
-        const filePath = path.join(uploadsDir, sanitizedFilename);
+        const filePath = path.join(uploadsDir, decodedFilename);
 
         // Verify file exists
         if (!fs.existsSync(filePath)) {
-            logger.info(`File not found: ${sanitizedFilename}, requested by user ${user.id}`);
+            logger.info(`File not found: ${decodedFilename}, requested by user ${user.id}`);
             return res.status(404).json({ error: 'File not found' });
         }
 
@@ -61,27 +64,37 @@ exports.downloadFile = async (req, res) => {
                 return res.status(403).json({ error: 'Access denied' });
             }
 
-            // Check if the requested file matches any of the intern's uploaded files
-            const internFiles = [
+            // VUL-05: Compare full normalized paths, NOT just basenames.
+            // basename-only comparison is an IDOR — two interns can share the same
+            // filename causing cross-user file disclosure.
+            const internFilePaths = [
                 intern.loiFile,
                 intern.passportPhoto,
                 intern.eSignature,
                 intern.signedNDA
-            ].filter(Boolean).map(f => path.basename(f));
+            ].filter(Boolean).map(f => {
+                // Stored paths may be relative (e.g. 'uploads/loi/file.pdf')
+                const abs = path.isAbsolute(f)
+                    ? path.normalize(f)
+                    : path.normalize(path.join(__dirname, '..', f));
+                return abs;
+            });
 
-            if (!internFiles.includes(sanitizedFilename)) {
-                logger.warn(`Unauthorized file access attempt: ${sanitizedFilename} by intern ${user.id}`);
+            if (!internFilePaths.includes(normalizedPath)) {
+                logger.warn(`Unauthorized file access attempt: ${decodedFilename} by intern ${user.id}`);
                 return res.status(403).json({ error: 'You do not have permission to access this file' });
             }
         }
 
         // Log successful file access
-        logger.info(`File accessed: ${sanitizedFilename} by ${user.userType} ${user.id}`);
+        logger.info(`File accessed: ${decodedFilename} by ${user.userType} ${user.id}`);
+
+        const downloadFilename = path.basename(decodedFilename);
 
         // Stream the file to the client
-        res.download(filePath, sanitizedFilename, (err) => {
+        res.download(filePath, downloadFilename, (err) => {
             if (err) {
-                logger.error(`Error downloading file ${sanitizedFilename}: ${err.message}`);
+                logger.error(`Error downloading file ${decodedFilename}: ${err.message}`);
                 if (!res.headersSent) {
                     res.status(500).json({ error: 'Error downloading file' });
                 }

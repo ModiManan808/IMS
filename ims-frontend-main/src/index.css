@@ -11,3 +11,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ── Lucide icon alignment ───────────────────────────────────
+   Ensures inline SVG icons sit flush with adjacent text in
+   buttons, badges, labels, and stat cards.
+   ─────────────────────────────────────────────────────────── */
+svg {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Modest gap between icon and following text */
+button svg:first-child,
+span svg:first-child,
+p svg:first-child,
+h2 svg:first-child,
+div svg:first-child {
+  margin-right: 5px;
+}

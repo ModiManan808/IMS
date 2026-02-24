@@ -24,7 +24,6 @@ const ForgotPassword: React.FC = () => {
                 ...(userType === 'admin' ? { email } : { applicationNo })
             };
 
-            console.log('Password reset request:', payload);
             await axios.post(`${API_URL}/api/request-password-reset`, payload);
             setSuccess(true);
         } catch (err: any) {
@@ -51,7 +50,7 @@ const ForgotPassword: React.FC = () => {
                             <p>Knowledge | Wisdom | Fulfilment</p>
                             <p className="institution">An Institution of National Importance</p>
                             <p className="ministry">(Ministry of Home Affairs, Government of India)</p>
-                            <p className="sanskrit">विद्या अमृत</p>
+                            <p className="sanskrit">विद्या अमृतं अश्नुते</p>
                         </div>
                     </div>
                 </div>
@@ -84,25 +83,27 @@ const ForgotPassword: React.FC = () => {
 
                             {/* User Type Selection */}
                             <div className="form-group">
-                                <label className="field-label">I am a</label>
-                                <div className="radio-group">
-                                    <label className="radio-label">
+                                <label className="field-label" style={{ textTransform: 'none', fontSize: '15px' }}>I am a</label>
+                                <div className="radio-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '24px', marginTop: '4px' }}>
+                                    <label className="radio-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, lineHeight: '1' }}>
                                         <input
                                             type="radio"
                                             name="userType"
                                             value="admin"
                                             checked={userType === 'admin'}
                                             onChange={(e) => setUserType('admin')}
+                                            style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer', accentColor: '#d32f2f' }}
                                         />
                                         Admin
                                     </label>
-                                    <label className="radio-label">
+                                    <label className="radio-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, lineHeight: '1' }}>
                                         <input
                                             type="radio"
                                             name="userType"
                                             value="intern"
                                             checked={userType === 'intern'}
                                             onChange={(e) => setUserType('intern')}
+                                            style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer', accentColor: '#d32f2f' }}
                                         />
                                         Intern
                                     </label>

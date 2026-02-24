@@ -20,9 +20,11 @@ const PORT = parseInt(process.env.PORT, 10) || 5000;
 
 // Middleware - CORS Configuration
 const allowedOrigins = [
+    'http://localhost:3000',
     'http://localhost:3759',
     'https://hydraulic-visiting-patents-rejected.trycloudflare.com',
     'https://issue-engaged-anything-supporting.trycloudflare.com',
+    'https://villages-weekend-fda-coupon.trycloudflare.com',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -60,7 +62,7 @@ app.use(cors({
             callback(null, true);
         } else {
             logger.warn(`CORS blocked request from origin: ${origin}`);
-            callback(null, true); // Allow for now, but log it
+            callback(new Error('CORS policy: origin not allowed'));
         }
     },
     credentials: true
@@ -76,9 +78,10 @@ app.use(express.urlencoded({ extended: true, limit: '15kb' }));
 // Now all file access requires JWT authentication via /api/files/:filename endpoint
 
 // SECURITY: Global Rate Limiting - Prevent Brute Force and DoS Attacks
+// NOTE: Temporarily increased for testing - reduce to 100 for production
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per 15 minutes
+    max: 100, // 100 requests per 15 minutes
     message: 'Too many requests from this IP, please try again after 15 minutes',
     standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
     legacyHeaders: false, // Disable `X-RateLimit-*` headers

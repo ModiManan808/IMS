@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import './Login.css';
@@ -11,15 +11,25 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showError = (msg: string) => {
+    setError(msg);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    // Auto-dismiss after 30 seconds
+    errorTimerRef.current = setTimeout(() => setError(''), 30000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    // Keep old error visible while new request is in flight
     setLoading(true);
 
     try {
       const response = await authService.login({ username, password, userType });
       const user = response.user;
+
+      setError('');
 
       if (user.role === 'Admin') {
         navigate('/admin/fresh');
@@ -31,9 +41,10 @@ const Login: React.FC = () => {
     } catch (err: any) {
       console.error('Login error:', err);
       const errorMessage = err.response?.data?.error || err.message || 'Login failed. Please check your credentials.';
-      setError(errorMessage);
       if (err.response?.status === 0 || err.code === 'ERR_NETWORK') {
-        setError('Cannot connect to server. Please make sure the backend is running on http://localhost:5000');
+        showError('Cannot connect to server. Please try again later or contact support.');
+      } else {
+        showError(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -56,7 +67,7 @@ const Login: React.FC = () => {
               <p>Knowledge | Wisdom | Fulfilment</p>
               <p className="institution">An Institution of National Importance</p>
               <p className="ministry">(Ministry of Home Affairs, Government of India)</p>
-              <p className="sanskrit">विद्या अमृत</p>
+              <p className="sanskrit">विद्या अमृतं अश्नुते</p>
             </div>
           </div>
         </div>
@@ -65,22 +76,24 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
               <label>User Type</label>
-              <div className="radio-group">
-                <label className="radio-label">
+              <div className="radio-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '30px', marginTop: '5px' }}>
+                <label className="radio-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, lineHeight: '1' }}>
                   <input
                     type="radio"
                     value="intern"
                     checked={userType === 'intern'}
                     onChange={(e) => setUserType(e.target.value as 'admin' | 'intern')}
+                    style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer', accentColor: '#d32f2f' }}
                   />
                   Intern
                 </label>
-                <label className="radio-label">
+                <label className="radio-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, lineHeight: '1' }}>
                   <input
                     type="radio"
                     value="admin"
                     checked={userType === 'admin'}
                     onChange={(e) => setUserType(e.target.value as 'admin' | 'intern')}
+                    style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer', accentColor: '#d32f2f' }}
                   />
                   Admin
                 </label>
@@ -93,6 +106,7 @@ const Login: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                autoComplete="username"
                 className="form-input"
               />
             </div>
@@ -103,6 +117,7 @@ const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 className="form-input"
               />
               <button
@@ -113,12 +128,28 @@ const Login: React.FC = () => {
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div className="error-message">
+                <span>{error}</span>
+                <button
+                  type="button"
+                  onClick={() => { setError(''); if (errorTimerRef.current) clearTimeout(errorTimerRef.current); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c62828', fontWeight: 'bold', fontSize: '16px', lineHeight: '1', padding: '0 0 0 10px', flexShrink: 0 }}
+                  aria-label="Dismiss error"
+                >✕</button>
+              </div>
+            )}
             <div className="form-actions">
               <button type="submit" className="login-button" disabled={loading}>
                 {loading ? 'Logging in...' : 'LOGIN'}
               </button>
-              <button type="button" className="forgot-password">Forgot Password ?</button>
+              <button
+                type="button"
+                className="forgot-password"
+                onClick={() => navigate('/forgot-password')}
+              >
+                Forgot Password ?
+              </button>
             </div>
           </form>
         </div>

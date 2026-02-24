@@ -25,6 +25,16 @@ const auth = (requiredRole) => {
             }
 
             const token = authHeader.split(' ')[1];
+
+            // VUL-04: Reject blacklisted (logged-out) tokens
+            const { isTokenBlacklisted } = require('../controllers/authController');
+            if (isTokenBlacklisted(token)) {
+                return res.status(401).json({
+                    error: 'Your session has been invalidated. Please login again.',
+                    code: 'TOKEN_BLACKLISTED'
+                });
+            }
+
             const payload = jwt.verify(token, JWT_SECRET);
             req.user = payload;
 

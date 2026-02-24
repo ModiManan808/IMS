@@ -13,7 +13,11 @@ exports.getFreshApplications = async (req, res) => {
         const interns = await Intern.findAll({
             where: { status: 'Fresh' },
             order: [['createdAt', 'DESC']],
-            attributes: ['id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo', 'loiFile', 'createdAt']
+            attributes: [
+                'id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo', 'loiFile',
+                'loiVerified', 'loiVerificationNotes', 'loiVerifiedBy', 'loiVerifiedAt',
+                'createdAt'
+            ]
         });
         res.json(interns);
     } catch (error) {
@@ -91,6 +95,29 @@ exports.decideOnFresh = async (req, res) => {
             intern.role = 'Intern_rejected';
             intern.rejectionReason = rejectionReason || '';
             await intern.save();
+
+            // Fire-and-forget rejection email
+            (async () => {
+                try {
+                    const reason = rejectionReason
+                        ? `\n\nReason: ${rejectionReason}`
+                        : '';
+
+                    await sendEmail(
+                        intern.personalEmail,
+                        'Internship Application Status - Not Selected',
+                        `Dear ${intern.fullName},\n\nThank you for applying for an internship at the Centre of Excellence in Cyber Security (CoE-CS), National Forensic Sciences University.\n\nAfter careful review of your application, we regret to inform you that we are unable to offer you an internship position at this time.${reason}\n\nWe appreciate your interest and encourage you to reapply in future cycles.\n\nBest regards,\nCoE-CS Team\nNational Forensic Sciences University`
+                    );
+
+                    logger.info('Rejection email sent', { internId: intern.id, email: intern.personalEmail });
+                } catch (emailError) {
+                    logger.error('Failed to send rejection email', {
+                        internId: intern.id,
+                        email: intern.personalEmail,
+                        error: emailError.message
+                    });
+                }
+            })();
         } else if (decision === 'Special Approval Required') {
             intern.status = 'Special_Approval_Required';
             intern.specialApprovalNotes = specialApprovalNotes || '';
@@ -417,5 +444,46 @@ exports.getCompletedInterns = async (req, res) => {
         res.json(dashboardData);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Verify LOI - Admin marks LOI as Verified or Rejected
+ */
+exports.verifyLOI = async (req, res) => {
+    try {
+        const validation = Validator.validateLOIVerification(req.body);
+
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: 'Invalid input data',
+                details: validation.errors
+            });
+        }
+
+        const { id, loiVerified, loiVerificationNotes } = validation.sanitized;
+
+        const intern = await Intern.findByPk(id);
+        if (!intern) {
+            return res.status(404).json({ error: 'Intern not found' });
+        }
+
+        // Update LOI verification fields
+        intern.loiVerified = loiVerified;
+        intern.loiVerificationNotes = loiVerificationNotes || '';
+        intern.loiVerifiedBy = req.user.id; // From auth middleware
+        intern.loiVerifiedAt = new Date();
+        await intern.save();
+
+        logger.info('LOI verification updated', {
+            internId: id,
+            loiVerified,
+            verifiedBy: req.user.id
+        });
+
+        res.json({ message: 'LOI verification status updated successfully' });
+    } catch (error) {
+        logger.error('Error in verifyLOI', { error: error.message, stack: error.stack });
+        res.status(500).json({ error: 'An error occurred while processing your request' });
     }
 };
