@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
@@ -9,87 +11,81 @@ const authCtrl = require('../controllers/authController');
 const fileCtrl = require('../controllers/fileController');
 const auth = require('../middleware/authMiddleware');
 
-// Rate Limiting for Login (S-03)
-// NOTE: Temporarily increased for testing - reduce to 5 for production
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50, // TESTING: Increased from 5 to 50 for development
-    message: 'Too many login attempts from this IP, please try again after 15 minutes',
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+// ── Rate limiter factory ──────────────────────────────────────────────────────
+const makeLimit = (max, windowMinutes = 15) =>
+  rateLimit({
+    windowMs: windowMinutes * 60_000,
+    max,
     standardHeaders: true,
     legacyHeaders: false,
-});
+    handler(_req, res) {
+      res.status(429).json({ error: `Too many attempts. Please wait ${windowMinutes} minutes and try again.` });
+    },
+  });
 
-// ==================== PUBLIC ROUTES ====================
+// Stricter in production, relaxed in development for convenience
+const loginLimiter         = makeLimit(IS_PROD ? 5  : 50,  15);
+const passwordResetLimiter = makeLimit(IS_PROD ? 3  : 20,  15);
+const changePasswordLimiter= makeLimit(IS_PROD ? 5  : 20,  15);
+const applicationLimiter   = makeLimit(IS_PROD ? 10 : 100, 60); // 10 apps/hr in prod
 
-// Application submission
-router.post('/apply', upload.single('loi'), appCtrl.submitApplication);
+// ── Public routes ─────────────────────────────────────────────────────────────
 
-// Login (for both admin and intern) - with rate limiting
+// Intern application submission (includes file upload)
+router.post('/apply', applicationLimiter, upload.single('loi'), appCtrl.submitApplication);
+
+// Authentication
 router.post('/login', loginLimiter, authCtrl.login);
 
-// Password Reset Routes - with rate limiting
-const passwordResetLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 3, // limit each IP to 3 requests per windowMs
-    message: 'Too many password reset attempts. Please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
+// Password reset flow
 router.post('/request-password-reset', passwordResetLimiter, authCtrl.requestPasswordReset);
-router.get('/verify-reset-token/:token', passwordResetLimiter, authCtrl.verifyResetToken);
+router.get('/verify-reset-token/:token', authCtrl.verifyResetToken);
 router.post('/reset-password/:token', authCtrl.resetPassword);
 
-// Change Password (authenticated users only) - with rate limiting
-const changePasswordLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each user to 5 password change attempts per windowMs
-    message: 'Too many password change attempts. Please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
+// Enrollment form (public URL sent by admin, secured by intern ID)
+router.get('/enroll/:id', internCtrl.getEnrollmentForm);
+router.post(
+  '/enroll/:id',
+  upload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'sign',  maxCount: 1 },
+    { name: 'nda',   maxCount: 1 },
+  ]),
+  internCtrl.submitEnrollment
+);
 
+// ── Authenticated routes ──────────────────────────────────────────────────────
+
+// Change own password (any authenticated user)
 router.post('/change-password', auth(), changePasswordLimiter, authCtrl.changePassword);
 
-// Enrollment form (public but secured by ID in link)
-router.get('/enroll/:id', internCtrl.getEnrollmentForm);
-router.post('/enroll/:id', upload.fields([
-    { name: 'photo', maxCount: 1 },
-    { name: 'sign', maxCount: 1 },
-    { name: 'nda', maxCount: 1 }
-]), internCtrl.submitEnrollment);
+// Logout (any authenticated user)
+router.post('/logout', auth(), authCtrl.logout);
 
-// ==================== ADMIN ROUTES ====================
+// ── Admin routes ──────────────────────────────────────────────────────────────
 
-// Dashboard - Get all tabs
-router.get('/admin/dashboard/fresh', auth('Admin'), adminCtrl.getFreshApplications);
-router.get('/admin/dashboard/pending', auth('Admin'), adminCtrl.getPendingApplications);
-router.get('/admin/dashboard/ongoing', auth('Admin'), adminCtrl.getOngoingInterns);
-router.get('/admin/dashboard/rejected', auth('Admin'), adminCtrl.getRejectedApplications);
+router.get('/admin/dashboard/fresh',     auth('Admin'), adminCtrl.getFreshApplications);
+router.get('/admin/dashboard/pending',   auth('Admin'), adminCtrl.getPendingApplications);
+router.get('/admin/dashboard/ongoing',   auth('Admin'), adminCtrl.getOngoingInterns);
+router.get('/admin/dashboard/rejected',  auth('Admin'), adminCtrl.getRejectedApplications);
 router.get('/admin/dashboard/completed', auth('Admin'), adminCtrl.getCompletedInterns);
 
-// Admin actions
-router.post('/admin/decision', auth('Admin'), adminCtrl.decideOnFresh);
-router.post('/admin/onboard', auth('Admin'), adminCtrl.finalizeOnboarding);
-router.post('/admin/verify-loi', auth('Admin'), adminCtrl.verifyLOI);
+router.post('/admin/decision',           auth('Admin'), adminCtrl.decideOnFresh);
+router.post('/admin/onboard',            auth('Admin'), adminCtrl.finalizeOnboarding);
+router.post('/admin/verify-loi',         auth('Admin'), adminCtrl.verifyLOI);
 
-// Get detailed intern information (for hyperlink click)
-router.get('/admin/intern/:id', auth('Admin'), adminCtrl.getInternDetails);
+router.get('/admin/intern/:id',          auth('Admin'), adminCtrl.getInternDetails);
 
-// ==================== INTERN ROUTES ====================
+// ── Intern routes ─────────────────────────────────────────────────────────────
 
-// Intern profile and reports
-router.get('/intern/profile', auth('Intern'), internCtrl.getMyProfile);
-router.get('/intern/reports', auth('Intern'), internCtrl.getMyReports);
-router.post('/intern/report', auth('Intern'), internCtrl.submitDailyReport);
+router.get('/intern/profile',  auth('Intern'), internCtrl.getMyProfile);
+router.get('/intern/reports',  auth('Intern'), internCtrl.getMyReports);
+router.post('/intern/report',  auth('Intern'), internCtrl.submitDailyReport);
 
-// ==================== SECURE FILE DOWNLOAD ====================
-
-// Secure file download with JWT authentication (supports subdirectories)
+// ── Secure file downloads ─────────────────────────────────────────────────────
+// Any authenticated user can request — fileCtrl enforces per-role permissions
 router.get('/files/*', auth(), fileCtrl.downloadFile);
-
-// ==================== AUTH ROUTES ====================
-
-router.post('/logout', authCtrl.logout);
 
 module.exports = router;
