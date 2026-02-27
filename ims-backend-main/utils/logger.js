@@ -62,12 +62,10 @@ const logger = winston.createLogger({
     ]
 });
 
-// If not in production, also log to console
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: consoleFormat
-    }));
-}
+// Always log to console (Render/Railway read stdout for logs)
+logger.add(new winston.transports.Console({
+    format: consoleFormat
+}));
 
 // Create a stream object for morgan middleware
 logger.stream = {
