@@ -1,48 +1,50 @@
+'use strict';
+
 const nodemailer = require('nodemailer');
+const logger = require('./logger');
 require('dotenv').config();
 
-let transporter;
-
+/**
+ * Creates a fresh transporter every time — avoids stale cached credentials.
+ */
 const createTransporter = () => {
     const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS } = process.env;
 
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-        console.warn('SMTP env vars missing; emails will be logged instead of sent.');
+        logger.warn('SMTP env vars missing — emails will be logged to console instead of sent.');
         return null;
     }
 
     return nodemailer.createTransport({
         host: SMTP_HOST,
         port: Number(SMTP_PORT),
-        secure: SMTP_SECURE === 'true',
+        secure: SMTP_SECURE === 'true', // true for port 465, false for 587
         auth: {
             user: SMTP_USER,
-            pass: SMTP_PASS
-        }
+            pass: SMTP_PASS,
+        },
+        // Timeout settings to prevent hanging
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 15_000,
     });
 };
 
 /**
- * Send email with support for multiple recipients and attachments
- * @param {string|string[]} to - Single email or array of emails
+ * Send an email.
+ * @param {string|string[]} to - Recipient email(s)
  * @param {string} subject - Email subject
- * @param {string} text - Email body (plain text)
- * @param {string} [html] - Email body (HTML, optional)
- * @param {string} [attachmentPath] - Path to file attachment (optional)
- * @returns {Promise<void>}
+ * @param {string} text - Plain text body
+ * @param {string|null} html - Optional HTML body
+ * @param {string|null} attachmentPath - Optional file path to attach
  */
 const sendEmail = async (to, subject, text, html = null, attachmentPath = null) => {
-    if (!transporter) {
-        transporter = createTransporter();
-    }
+    const transporter = createTransporter();
 
-    // Fallback to console logging if transporter could not be created
+    // Fallback: log to console if SMTP not configured
     if (!transporter) {
         const recipients = Array.isArray(to) ? to.join(', ') : to;
-        console.log(`[Email stub] To: ${recipients} | Subject: ${subject}\n${text}`);
-        if (attachmentPath) {
-            console.log(`[Email stub] Attachment: ${attachmentPath}`);
-        }
+        logger.info(`[Email stub] To: ${recipients} | Subject: ${subject}\n${text}`);
         return;
     }
 
@@ -52,7 +54,7 @@ const sendEmail = async (to, subject, text, html = null, attachmentPath = null) 
         from: fromAddress,
         to: Array.isArray(to) ? to.join(', ') : to,
         subject,
-        text
+        text,
     };
 
     if (html) {
@@ -61,26 +63,37 @@ const sendEmail = async (to, subject, text, html = null, attachmentPath = null) 
 
     if (attachmentPath) {
         const fs = require('fs');
+        const path = require('path');
         if (fs.existsSync(attachmentPath)) {
             mailOptions.attachments = [{
-                filename: require('path').basename(attachmentPath),
-                path: attachmentPath
+                filename: path.basename(attachmentPath),
+                path: attachmentPath,
             }];
         } else {
-            console.warn(`Attachment file not found: ${attachmentPath}`);
+            logger.warn(`Attachment not found: ${attachmentPath}`);
         }
     }
 
-    await transporter.sendMail(mailOptions);
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        logger.info(`Email sent successfully`, {
+            to: mailOptions.to,
+            subject,
+            messageId: info.messageId,
+        });
+    } catch (error) {
+        logger.error(`Failed to send email`, {
+            to: mailOptions.to,
+            subject,
+            error: error.message,
+            code: error.code,
+        });
+        throw error; // Re-throw so caller knows it failed
+    }
 };
 
 /**
- * Send email to multiple recipients
- * @param {string[]} recipients - Array of email addresses
- * @param {string} subject - Email subject
- * @param {string} text - Email body
- * @param {string} [html] - Email body (HTML, optional)
- * @returns {Promise<void>}
+ * Send email to multiple recipients.
  */
 const sendEmailToMultiple = async (recipients, subject, text, html = null) => {
     await sendEmail(recipients, subject, text, html);
@@ -88,4 +101,3 @@ const sendEmailToMultiple = async (recipients, subject, text, html = null) => {
 
 module.exports = sendEmail;
 module.exports.sendEmailToMultiple = sendEmailToMultiple;
-
