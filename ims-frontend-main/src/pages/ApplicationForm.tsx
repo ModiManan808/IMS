@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle, ChevronLeft } from 'lucide-react';
 import { internService } from '../services/internService';
-import { CheckCircle } from 'lucide-react';
 import './ApplicationForm.css';
+
+const MOBILE_REGEX = /^[0-9]{10}$/;
 
 const ApplicationForm: React.FC = () => {
   const navigate = useNavigate();
@@ -14,11 +16,29 @@ const ApplicationForm: React.FC = () => {
   });
   const [loiFile, setLoiFile] = useState<File | null>(null);
   const [error, setError] = useState('');
+  const [mobileError, setMobileError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (name === 'mobile') {
+      if (value.length > 0 && !MOBILE_REGEX.test(value)) {
+        setMobileError('Mobile number must be exactly 10 digits (numbers only).');
+      } else {
+        setMobileError('');
+      }
+    }
+  };
+
+  // Block non-numeric keys for the mobile field
+  const handleMobileKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!allowedKeys.includes(e.key) && !/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +60,12 @@ const ApplicationForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!MOBILE_REGEX.test(formData.mobile)) {
+      setMobileError('Mobile number must be exactly 10 digits (numbers only).');
+      return;
+    }
+
     setLoading(true);
 
     if (!loiFile) {
@@ -78,6 +104,15 @@ const ApplicationForm: React.FC = () => {
 
   return (
     <div className="application-form-container">
+      <button
+        type="button"
+        className="back-home-btn"
+        onClick={() => navigate('/')}
+        aria-label="Back to home page"
+      >
+        <ChevronLeft size={16} aria-hidden="true" />
+        Back to Home
+      </button>
       <div className="application-form">
         <h1>Internship Application</h1>
         <form onSubmit={handleSubmit}>
@@ -121,11 +156,20 @@ const ApplicationForm: React.FC = () => {
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
+              onKeyDown={handleMobileKeyDown}
               pattern="[0-9]{10}"
               maxLength={10}
-              title="Please enter a valid 10-digit mobile number"
+              inputMode="numeric"
+              placeholder="10-digit mobile number"
+              aria-describedby={mobileError ? 'mobile-error' : undefined}
+              aria-invalid={!!mobileError}
               required
             />
+            {mobileError && (
+              <span id="mobile-error" className="field-error" role="alert">
+                {mobileError}
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label>Letter of Intent (PDF, max 1MB) *</label>

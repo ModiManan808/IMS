@@ -68,7 +68,11 @@ const AppContent: React.FC = () => {
       )}
       <main className={`main-content ${showLayout ? 'with-layout' : ''}`}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={
+            authState.isAuthenticated
+              ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/fresh' : '/intern/dashboard'} replace />
+              : <HomePage />
+          } />
           <Route path="/login" element={authState.isAuthenticated ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/fresh' : '/intern/dashboard'} /> : <Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />

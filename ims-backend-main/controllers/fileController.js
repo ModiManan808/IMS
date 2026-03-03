@@ -90,13 +90,31 @@ exports.downloadFile = async (req, res) => {
         logger.info(`File accessed: ${decodedFilename} by ${user.userType} ${user.id}`);
 
         const downloadFilename = path.basename(decodedFilename);
+        const ext = path.extname(downloadFilename).toLowerCase();
 
-        // Stream the file to the client
-        res.download(filePath, downloadFilename, (err) => {
+        // Map extensions to MIME types so images are served inline (not as attachments)
+        const mimeMap = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.pdf': 'application/pdf',
+        };
+        const contentType = mimeMap[ext] || 'application/octet-stream';
+
+        // For images: serve inline so the blob URL works in an <img> tag.
+        // For PDFs/other: keep as attachment for download.
+        const isImage = ['.jpg', '.jpeg', '.png'].includes(ext);
+
+        res.set('Content-Type', contentType);
+        if (!isImage) {
+            res.set('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        }
+
+        res.sendFile(filePath, (err) => {
             if (err) {
-                logger.error(`Error downloading file ${decodedFilename}: ${err.message}`);
+                logger.error(`Error sending file ${decodedFilename}: ${err.message}`);
                 if (!res.headersSent) {
-                    res.status(500).json({ error: 'Error downloading file' });
+                    res.status(500).json({ error: 'Error sending file' });
                 }
             }
         });

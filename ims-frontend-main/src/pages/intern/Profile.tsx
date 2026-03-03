@@ -26,7 +26,7 @@ interface UserProfile {
     passportPhoto?: string;
 }
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5586';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 /** Fetch the passport photo as a blob URL so the JWT auth header is used */
 async function fetchPhotoBlob(relativePath: string): Promise<string | null> {

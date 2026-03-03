@@ -120,7 +120,7 @@ exports.login = async (req, res) => {
     const userInfo =
       userType === 'admin'
         ? { id: user.id, username: user.username, email: user.email, fullName: user.fullName, role: 'Admin' }
-        : { id: user.id, applicationNo: user.applicationNo, fullName: user.fullName, email: user.personalEmail, role, status: user.status };
+        : { id: user.id, applicationNo: user.applicationNo, fullName: user.fullName, email: user.personalEmail, role, status: user.status, passportPhoto: user.passportPhoto || null };
 
     logger.info('Successful login', { userId: user.id, userType, ip: req.ip });
 

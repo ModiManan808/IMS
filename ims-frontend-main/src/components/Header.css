@@ -76,6 +76,7 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
+  color: white;
 }
 
 .header-right {
@@ -110,6 +111,17 @@
   font-weight: bold;
   color: white;
   font-size: 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile-picture-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  border-radius: 50%;
 }
 
 .user-name {

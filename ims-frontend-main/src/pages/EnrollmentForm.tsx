@@ -3,6 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { internService } from '../services/internService';
 import './EnrollmentForm.css';
 
+const CONTACT_REGEX = /^[0-9]{10}$/;
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
+const ALLOWED_PDF_TYPES = ['application/pdf'];
+
 const EnrollmentForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -25,20 +30,34 @@ const EnrollmentForm: React.FC = () => {
     sign: null as File | null,
     nda: null as File | null,
   });
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [fileErrors, setFileErrors] = useState({
+    photo: '',
+    sign: '',
+    nda: '',
+  });
+  const [contactError, setContactError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Cleanup object URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    };
+  }, [photoPreviewUrl]);
 
   const loadFormData = async () => {
     try {
       const response = await internService.getEnrollmentForm(id!);
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         fullName: response.data.fullName,
         enrollmentNo: response.data.enrollmentNo,
         emailAddress: response.data.email,
-      });
-    } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to load enrollment form');
+      }));
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to load enrollment form');
     }
   };
 
@@ -50,31 +69,77 @@ const EnrollmentForm: React.FC = () => {
   }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (name === 'contactNo') {
+      if (value.length > 0 && !CONTACT_REGEX.test(value)) {
+        setContactError('Contact number must be exactly 10 digits (numbers only).');
+      } else {
+        setContactError('');
+      }
+    }
+  };
+
+  // Block non-numeric keys for the contact field
+  const handleContactKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!allowedKeys.includes(e.key) && !/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
   };
 
   const handleFileChange = (field: 'photo' | 'sign' | 'nda') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.size > 1024 * 1024) {
-        setError(`${field} file size must be less than 1MB`);
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+
+    // Size check
+    if (file.size > 1024 * 1024) {
+      setFileErrors({ ...fileErrors, [field]: 'File size must be less than 1 MB.' });
+      return;
+    }
+
+    // MIME type check
+    if (field === 'photo' || field === 'sign') {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setFileErrors({ ...fileErrors, [field]: 'Only JPG/PNG images are allowed.' });
         return;
       }
-      setFiles({ ...files, [field]: file });
-      setError('');
+    } else if (field === 'nda') {
+      if (!ALLOWED_PDF_TYPES.includes(file.type)) {
+        setFileErrors({ ...fileErrors, [field]: 'Only PDF files are allowed for the NDA.' });
+        return;
+      }
+    }
+
+    // Clear error and store file
+    setFileErrors({ ...fileErrors, [field]: '' });
+    setFiles({ ...files, [field]: file });
+
+    // Generate preview for photo only
+    if (field === 'photo') {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+      setPhotoPreviewUrl(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+
+    // Final contact validation
+    if (!CONTACT_REGEX.test(formData.contactNo)) {
+      setContactError('Contact number must be exactly 10 digits (numbers only).');
+      return;
+    }
 
     if (!files.photo || !files.sign || !files.nda) {
-      setError('Please upload all required files');
+      setError('Please upload all required files (Passport Photo, E-Signature, and Signed NDA).');
       setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     try {
       await internService.submitEnrollment(id!, {
@@ -85,8 +150,8 @@ const EnrollmentForm: React.FC = () => {
       });
       alert('Enrollment submitted successfully!');
       navigate('/login');
-    } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to submit enrollment');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to submit enrollment');
     } finally {
       setLoading(false);
     }
@@ -133,7 +198,25 @@ const EnrollmentForm: React.FC = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Contact No. *</label>
-              <input type="tel" name="contactNo" value={formData.contactNo} onChange={handleChange} required />
+              <input
+                type="tel"
+                name="contactNo"
+                value={formData.contactNo}
+                onChange={handleChange}
+                onKeyDown={handleContactKeyDown}
+                pattern="[0-9]{10}"
+                maxLength={10}
+                inputMode="numeric"
+                placeholder="10-digit contact number"
+                aria-describedby={contactError ? 'contact-error' : undefined}
+                aria-invalid={!!contactError}
+                required
+              />
+              {contactError && (
+                <span id="contact-error" className="field-error" role="alert">
+                  {contactError}
+                </span>
+              )}
             </div>
             <div className="form-group">
               <label>Email Address *</label>
@@ -166,23 +249,79 @@ const EnrollmentForm: React.FC = () => {
             <textarea name="permanentAddress" value={formData.permanentAddress} onChange={handleChange} required rows={3} />
           </div>
 
+          {/* File uploads row */}
           <div className="form-row">
+            {/* Passport Photo — with thumbnail preview */}
             <div className="form-group">
               <label>Passport Size Photo (JPG/PNG, max 1MB) *</label>
-              <input type="file" accept=".jpg,.jpeg,.png" onChange={handleFileChange('photo')} required />
-              {files.photo && <p className="file-name">Selected: {files.photo.name}</p>}
+              <div className="photo-upload-wrapper">
+                {photoPreviewUrl && (
+                  <img
+                    src={photoPreviewUrl}
+                    alt="Passport photo preview"
+                    className="photo-preview"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={handleFileChange('photo')}
+                  aria-describedby={fileErrors.photo ? 'photo-error' : undefined}
+                  aria-invalid={!!fileErrors.photo}
+                  required
+                />
+              </div>
+              {fileErrors.photo && (
+                <span id="photo-error" className="field-error" role="alert">
+                  {fileErrors.photo}
+                </span>
+              )}
+              {files.photo && !fileErrors.photo && (
+                <p className="file-name">Selected: {files.photo.name}</p>
+              )}
             </div>
+
+            {/* E-Signature */}
             <div className="form-group">
               <label>E-Signature (JPG/PNG, max 1MB) *</label>
-              <input type="file" accept=".jpg,.jpeg,.png" onChange={handleFileChange('sign')} required />
-              {files.sign && <p className="file-name">Selected: {files.sign.name}</p>}
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png"
+                onChange={handleFileChange('sign')}
+                aria-describedby={fileErrors.sign ? 'sign-error' : undefined}
+                aria-invalid={!!fileErrors.sign}
+                required
+              />
+              {fileErrors.sign && (
+                <span id="sign-error" className="field-error" role="alert">
+                  {fileErrors.sign}
+                </span>
+              )}
+              {files.sign && !fileErrors.sign && (
+                <p className="file-name">Selected: {files.sign.name}</p>
+              )}
             </div>
           </div>
 
+          {/* NDA — full width */}
           <div className="form-group">
             <label>Signed NDA (PDF, max 1MB) *</label>
-            <input type="file" accept=".pdf" onChange={handleFileChange('nda')} required />
-            {files.nda && <p className="file-name">Selected: {files.nda.name}</p>}
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange('nda')}
+              aria-describedby={fileErrors.nda ? 'nda-error' : undefined}
+              aria-invalid={!!fileErrors.nda}
+              required
+            />
+            {fileErrors.nda && (
+              <span id="nda-error" className="field-error" role="alert">
+                {fileErrors.nda}
+              </span>
+            )}
+            {files.nda && !fileErrors.nda && (
+              <p className="file-name">Selected: {files.nda.name}</p>
+            )}
           </div>
 
           {error && <div className="error-message">{error}</div>}
