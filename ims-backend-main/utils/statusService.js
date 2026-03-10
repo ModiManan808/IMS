@@ -14,7 +14,7 @@ exports.checkAndUpdateCompletedInterns = async () => {
             where: {
                 status: 'Active',
                 dateOfLeaving: {
-                    [Op.lte]: today
+                    [Op.lt]: today   // Use lt (strictly less-than) so interns stay Active on their last day
                 }
             }
         });

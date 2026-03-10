@@ -293,3 +293,93 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Edit Mode ────────────────────────────────────────────── */
+.dash-edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dash-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dash-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dash-save-btn,
+.dash-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dash-save-btn {
+  background: #1a237e;
+  color: #fff;
+}
+
+.dash-save-btn:hover {
+  background: #283593;
+}
+
+.dash-cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.dash-cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Edit button on view card */
+.dash-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dash-edit-btn:hover {
+  background: #dbeafe;
+}
+
+.dash-edit-locked {
+  display: inline-flex;
+  align-items: center;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* "Edited" badge */
+.dash-edited-badge {
+  font-size: 11px;
+  color: #7c3aed;
+  font-weight: 600;
+  margin-bottom: 4px;
+}

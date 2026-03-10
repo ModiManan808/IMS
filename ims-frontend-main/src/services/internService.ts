@@ -75,4 +75,13 @@ export const internService = {
   submitDailyReport: async (data: DailyReportRequest) => {
     return api.post('/intern/report', data);
   },
+
+  updateReport: async (reportId: number, data: {
+    domain: string;
+    workDescription: string;
+    toolsUsed: string;
+    issuesFaced: string;
+  }) => {
+    return api.put(`/intern/report/${reportId}`, data);
+  },
 };

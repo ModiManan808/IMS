@@ -1,0 +1,369 @@
+/* ============================================================
+   ADMIN LOGIN – Styles
+   ============================================================ */
+
+.admin-login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    padding: 24px;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Panel -------------------------------------------------- */
+.admin-login-panel {
+    display: flex;
+    width: 100%;
+    max-width: 960px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* ── Left branding ──────────────────────────────────────── */
+.admin-branding {
+    flex: 1;
+    background: linear-gradient(160deg, #b71c1c 0%, #c62828 40%, #8e0000 100%);
+    padding: 60px 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-branding::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.admin-branding-inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.admin-logo {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+    filter: brightness(0) invert(1) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+    margin-bottom: 28px;
+}
+
+.admin-branding-inner h2 {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0 0 8px;
+    letter-spacing: -0.3px;
+}
+
+.admin-tagline {
+    font-size: 13px;
+    opacity: 0.85;
+    margin: 0 0 4px;
+}
+
+.admin-institution {
+    font-size: 12px;
+    opacity: 0.75;
+    margin: 0 0 2px;
+}
+
+.admin-ministry {
+    font-size: 11px;
+    opacity: 0.65;
+    margin: 0;
+}
+
+.admin-divider {
+    width: 48px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.4);
+    margin: 28px auto 24px;
+    border-radius: 1px;
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(8px);
+}
+
+/* ── Right form side ────────────────────────────────────── */
+.admin-form-side {
+    flex: 1;
+    background: #ffffff;
+    padding: 56px 52px;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-form-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.admin-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 20px rgba(198, 40, 40, 0.35);
+}
+
+.admin-form-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
+}
+
+.admin-subtitle {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+/* Form controls ------------------------------------------ */
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+}
+
+.admin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.admin-form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    letter-spacing: 0.2px;
+}
+
+.admin-form-group input {
+    width: 100%;
+    padding: 13px 16px;
+    border: 2px solid #e8e8e8;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1a1a2e;
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    box-sizing: border-box;
+}
+
+.admin-form-group input:focus {
+    outline: none;
+    border-color: #c62828;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
+}
+
+.admin-form-group input::placeholder {
+    color: #bbb;
+    font-size: 14px;
+}
+
+/* Password wrapper --------------------------------------- */
+.admin-password-wrap {
+    position: relative;
+}
+
+.admin-password-wrap input {
+    padding-right: 48px;
+}
+
+.admin-toggle-pw {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.admin-toggle-pw:hover {
+    color: #c62828;
+}
+
+/* Error -------------------------------------------------- */
+.admin-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff5f5;
+    border: 1px solid #ffcdd2;
+    border-left: 4px solid #c62828;
+    padding: 12px 14px;
+    border-radius: 8px;
+    color: #c62828;
+    font-size: 14px;
+    animation: errorSlide 0.25s ease;
+}
+
+@keyframes errorSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-error span {
+    flex: 1;
+}
+
+.admin-error button {
+    background: none;
+    border: none;
+    color: #c62828;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+
+.admin-error button:hover {
+    opacity: 1;
+}
+
+/* Submit button ------------------------------------------ */
+.admin-submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+    box-shadow: 0 6px 18px rgba(198, 40, 40, 0.35);
+    margin-top: 4px;
+}
+
+.admin-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(198, 40, 40, 0.45);
+}
+
+.admin-submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.admin-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Spinner ----------------------------------------------- */
+.admin-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Footer notice ----------------------------------------- */
+.admin-security-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 28px;
+    padding: 12px 16px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #b45309;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+
+.admin-security-notice svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 720px) {
+    .admin-login-panel {
+        flex-direction: column;
+        max-width: 480px;
+    }
+
+    .admin-branding {
+        padding: 40px 32px;
+    }
+
+    .admin-form-side {
+        padding: 40px 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-login-container {
+        padding: 16px;
+    }
+
+    .admin-form-side {
+        padding: 32px 24px;
+    }
+}

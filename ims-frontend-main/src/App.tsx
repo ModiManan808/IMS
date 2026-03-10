@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
+import ToastContainer from './components/ToastContainer';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import HomePage from './pages/HomePage';
@@ -19,6 +21,8 @@ import CompletedInterns from './pages/admin/CompletedInterns';
 import InternDashboard from './pages/intern/InternDashboard';
 import Profile from './pages/intern/Profile';
 import { authService } from './services/authService';
+import { ToastContext } from './context/ToastContext';
+import { useToastState } from './hooks/useToast';
 import './App.css';
 
 const AppContent: React.FC = () => {
@@ -41,12 +45,10 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    // Update on location change
     updateAuthState();
   }, [location]);
 
   useEffect(() => {
-    // Subscribe to auth changes
     const unsubscribe = authService.onAuthChange(updateAuthState);
     return unsubscribe;
   }, []);
@@ -74,6 +76,11 @@ const AppContent: React.FC = () => {
               : <HomePage />
           } />
           <Route path="/login" element={authState.isAuthenticated ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/fresh' : '/intern/dashboard'} /> : <Login />} />
+          <Route path="/login/admin" element={
+            authState.isAuthenticated && authState.user?.role === 'Admin'
+              ? <Navigate to="/admin/fresh" />
+              : <AdminLogin />
+          } />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/apply" element={<ApplicationForm />} />
@@ -135,10 +142,15 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const { toasts, removeToast, showSuccess, showError, showWarning, showInfo } = useToastState();
+
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ToastContext.Provider value={{ showSuccess, showError, showWarning, showInfo }}>
+      <Router>
+        <AppContent />
+        <ToastContainer toasts={toasts} onClose={removeToast} />
+      </Router>
+    </ToastContext.Provider>
   );
 };
 

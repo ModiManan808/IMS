@@ -187,3 +187,30 @@
   padding: 60px;
   color: #666;
 }
+
+/* ── Document Viewer Section ─────────────────────────────── */
+.documents-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px dashed #e5e7eb;
+}
+
+.documents-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 14px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+/* Override modal-content max-width when docs are shown */
+.modal-content:has(.documents-section) {
+  max-width: 680px;
+}

@@ -260,8 +260,14 @@ exports.getOngoingInterns = async (req, res) => {
         const { checkAndUpdateCompletedInterns } = require('../utils/statusService');
         await checkAndUpdateCompletedInterns();
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const interns = await Intern.findAll({
-            where: { status: 'Active' },
+            where: {
+                status: 'Active',
+                dateOfJoining: { [Op.lte]: today }  // Only show interns whose internship has started
+            },
             include: [{
                 model: DailyReport,
                 as: 'reports',
@@ -270,8 +276,7 @@ exports.getOngoingInterns = async (req, res) => {
             order: [['applicationNo', 'ASC']]
         });
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+
 
         const dashboardData = interns.map(intern => {
             const startDate = new Date(intern.dateOfJoining);
@@ -282,7 +287,7 @@ exports.getOngoingInterns = async (req, res) => {
             const daysSinceStart = Math.max(1, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
 
             // Count unique days with reports
-            const uniqueReportDates = new Set(intern.reports.map(r => r.reportDate?.toISOString().split('T')[0]));
+            const uniqueReportDates = new Set(intern.reports.map(r => r.reportDate ? String(r.reportDate).split('T')[0] : null).filter(Boolean));
             const daysAttended = uniqueReportDates.size;
 
             // Calculate attendance percentage
@@ -360,11 +365,21 @@ exports.getInternDetails = async (req, res) => {
             ? ((daysAttended / daysSinceStart) * 100).toFixed(1)
             : '0.0';
 
+        const toFileUrl = (filePath) => {
+            if (!filePath) return null;
+            // Convert stored path (e.g. uploads/photos/x.jpg) to API URL (/files/photos/x.jpg)
+            const relativePath = filePath.replace(/\\/g, '/').replace(/^.*uploads\//, '');
+            return `/files/${relativePath}`;
+        };
+
         res.json({
             ...intern.toJSON(),
             daysSinceStart,
             daysAttended,
-            attendancePct: parseFloat(attendancePct)
+            attendancePct: parseFloat(attendancePct),
+            photoUrl: toFileUrl(intern.passportPhoto),
+            signUrl: toFileUrl(intern.eSignature),
+            ndaUrl: toFileUrl(intern.signedNDA),
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -412,7 +427,7 @@ exports.getCompletedInterns = async (req, res) => {
             const timeDiff = endDate - startDate;
             const totalDays = Math.max(1, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
 
-            const uniqueReportDates = new Set(intern.reports.map(r => r.reportDate?.toISOString().split('T')[0]));
+            const uniqueReportDates = new Set(intern.reports.map(r => r.reportDate ? String(r.reportDate).split('T')[0] : null).filter(Boolean));
             const daysAttended = uniqueReportDates.size;
 
             const attendancePct = totalDays > 0
@@ -487,3 +502,39 @@ exports.verifyLOI = async (req, res) => {
         res.status(500).json({ error: 'An error occurred while processing your request' });
     }
 };
+
+/**
+ * Report Statistics for Ongoing Interns dashboard
+ */
+exports.getReportStatistics = async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // First, get all active intern IDs
+        const activeInterns = await Intern.findAll({
+            where: { status: 'Active', dateOfJoining: { [Op.lte]: today } },
+            attributes: ['id']
+        });
+        const activeInternIds = activeInterns.map(i => i.id);
+
+        const [totalReports, todayReports, ongoingInterns] = await Promise.all([
+            // Only count reports belonging to active interns
+            DailyReport.count({ where: { internId: { [Op.in]: activeInternIds } } }),
+            DailyReport.count({ where: { internId: { [Op.in]: activeInternIds }, reportDate: { [Op.gte]: today } } }),
+
+            // Just count the array size since we already queried them
+            Promise.resolve(activeInternIds.length),
+        ]);
+
+        res.json({
+            totalReports,
+            todayReports,
+            ongoingInterns,
+        });
+    } catch (error) {
+        logger.error('Error in getReportStatistics', { error: error.message });
+        res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+};
+

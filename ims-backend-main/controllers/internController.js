@@ -239,3 +239,48 @@ exports.getMyProfile = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * Update a daily report (within 24-hour window)
+ */
+exports.updateReport = async (req, res) => {
+    try {
+        const { reportId } = req.params;
+        const internId = req.user.id;
+
+        const report = await DailyReport.findByPk(reportId);
+        if (!report) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        if (report.internId !== internId) {
+            return res.status(403).json({ error: 'Unauthorized: this report belongs to another intern' });
+        }
+
+        // Enforce 24-hour edit window
+        const hoursSince = (Date.now() - new Date(report.createdAt).getTime()) / (1000 * 60 * 60);
+        if (hoursSince > 24) {
+            return res.status(400).json({ error: 'Reports can only be edited within 24 hours of submission' });
+        }
+
+        const { domain, workDescription, toolsUsed, issuesFaced } = req.body;
+
+        if (!domain || !workDescription) {
+            return res.status(400).json({ error: 'Domain and Work Description are required' });
+        }
+
+        await report.update({
+            domain,
+            workDescription,
+            toolsUsed: toolsUsed || '',
+            issuesFaced: issuesFaced || '',
+            editedAt: new Date(),
+            editCount: (report.editCount || 0) + 1,
+        });
+
+        res.json({ message: 'Report updated successfully', report });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+

@@ -1,8 +1,8 @@
 .sidebar {
   position: fixed;
   left: 0;
-  top: 80px;
-  height: calc(100vh - 80px);
+  top: 130px;
+  height: calc(100vh - 130px);
   width: 250px;
   background: #424242;
   color: white;
@@ -75,8 +75,8 @@
   .sidebar {
     transform: translateX(0);
     position: fixed;
-    height: calc(100vh - 80px);
-    top: 80px;
+    height: calc(100vh - 130px);
+    top: 130px;
   }
 
   .sidebar-overlay {

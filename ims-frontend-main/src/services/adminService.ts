@@ -56,4 +56,8 @@ export const adminService = {
   getInternDetails: async (id: number) => {
     return api.get(`/admin/intern/${id}`);
   },
+
+  getReportStatistics: async () => {
+    return api.get('/admin/reports/statistics');
+  },
 };

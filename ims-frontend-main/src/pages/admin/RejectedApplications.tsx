@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { Intern } from '../../types';
+import { Search } from 'lucide-react';
+import { formatDate } from '../../utils/dateFormat';
 import './RejectedApplications.css';
 
 const RejectedApplications: React.FC = () => {
   const [applications, setApplications] = useState<Intern[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     loadApplications();
@@ -22,6 +25,12 @@ const RejectedApplications: React.FC = () => {
     }
   };
 
+  const filtered = applications.filter((a) =>
+    a.fullName.toLowerCase().includes(search.toLowerCase()) ||
+    a.enrollmentNo?.toLowerCase().includes(search.toLowerCase()) ||
+    a.personalEmail?.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -29,11 +38,24 @@ const RejectedApplications: React.FC = () => {
   return (
     <div className="rejected-applications">
       <h1>Rejected Applications</h1>
-      {applications.length === 0 ? (
-        <div className="empty-state">No rejected applications</div>
+
+      {/* ── Search ── */}
+      <div className="search-bar-wrapper">
+        <Search size={16} className="search-icon" />
+        <input
+          type="text"
+          className="search-bar"
+          placeholder="Search by name, enrollment no or email…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty-state">{search ? 'No applications match your search' : 'No rejected applications'}</div>
       ) : (
         <div className="applications-list">
-          {applications.map((app) => (
+          {filtered.map((app) => (
             <div key={app.id} className="application-card">
               <div className="card-header">
                 <h3>{app.fullName}</h3>
@@ -45,7 +67,7 @@ const RejectedApplications: React.FC = () => {
                 {app.rejectionReason && (
                   <p><strong>Reason:</strong> {app.rejectionReason}</p>
                 )}
-                <p><strong>Rejected:</strong> {new Date(app.updatedAt || '').toLocaleDateString()}</p>
+                <p><strong>Rejected:</strong> {formatDate(app.updatedAt)}</p>
               </div>
             </div>
           ))}

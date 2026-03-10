@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { internService } from '../services/internService';
+import { CheckCircle } from 'lucide-react';
 import './EnrollmentForm.css';
 
 const CONTACT_REGEX = /^[0-9]{10}$/;
@@ -31,14 +32,12 @@ const EnrollmentForm: React.FC = () => {
     nda: null as File | null,
   });
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
-  const [fileErrors, setFileErrors] = useState({
-    photo: '',
-    sign: '',
-    nda: '',
-  });
+  const [fileErrors, setFileErrors] = useState({ photo: '', sign: '', nda: '' });
   const [contactError, setContactError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [submittedName, setSubmittedName] = useState('');
 
   // Cleanup object URL on unmount to avoid memory leaks
   useEffect(() => {
@@ -148,14 +147,39 @@ const EnrollmentForm: React.FC = () => {
         sign: files.sign,
         nda: files.nda,
       });
-      alert('Enrollment submitted successfully!');
-      navigate('/login');
+      setSubmittedName(formData.fullName);
+      setSubmitted(true);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to submit enrollment');
     } finally {
       setLoading(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <div className="enrollment-success-page">
+        <div className="success-card">
+          <div className="success-icon">
+            <CheckCircle size={56} strokeWidth={1.5} />
+          </div>
+          <h1>Enrollment Submitted!</h1>
+          <p className="success-greeting">Dear <strong>{submittedName}</strong>,</p>
+          <p className="success-msg">
+            Thank you for completing your enrollment. Your details have been successfully
+            submitted and are now pending review by the CoE-CS administration team.
+          </p>
+          <p className="success-email-note">
+            You will receive an email with your login credentials once your onboarding
+            is finalized. Please keep an eye on your registered email inbox.
+          </p>
+          <button className="goto-login-button" onClick={() => navigate('/login')}>
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="enrollment-form-container">

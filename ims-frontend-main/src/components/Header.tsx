@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
 import { authService } from '../services/authService';
 import './Header.css';
 
@@ -97,21 +96,13 @@ const Header: React.FC = () => {
     <header className="header">
       <div className="header-left">
         <img src="/nfsu-logo.png" alt="NFSU Logo" className="nfsu-logo" />
-        <div className="nfsu-info">
-          <h1>National Forensic Sciences University</h1>
-          <p>Knowledge | Wisdom | Fulfilment</p>
-          <p className="institution-note">
-            An Institution of National Importance (Ministry of Home Affairs, Government of India)
-          </p>
-        </div>
       </div>
       <div className="header-center">
-        <div className="search-bar">
-          <input type="text" placeholder="E-Content Search" />
-          <Search className="search-icon" size={18} aria-hidden="true" />
-        </div>
+        <span className="header-title">Cyber Security Centre of Excellence &nbsp;–&nbsp; NFSU</span>
       </div>
+
       <div className="header-right">
+        <img src="/coecs-logo.png" alt="CoE-CS Logo" className="coecs-logo" />
         <div
           className="user-profile"
           onClick={() => setShowDropdown(!showDropdown)}

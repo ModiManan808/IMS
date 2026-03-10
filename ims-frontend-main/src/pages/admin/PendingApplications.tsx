@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { Intern } from '../../types';
+import { useToast } from '../../hooks/useToast';
+import DocumentViewer from '../../components/DocumentViewer';
 import './PendingApplications.css';
 
 const PendingApplications: React.FC = () => {
   const [applications, setApplications] = useState<Intern[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [internDetails, setInternDetails] = useState<any>(null);
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     applicationNo: '',
     dateOfJoining: '',
     dateOfLeaving: '',
   });
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     loadApplications();
@@ -28,12 +33,23 @@ const PendingApplications: React.FC = () => {
     }
   };
 
+  const handleSelectIntern = async (id: number) => {
+    setSelectedId(id);
+    setFormError('');
+    try {
+      const res = await adminService.getInternDetails(id);
+      setInternDetails(res.data);
+    } catch {
+      setInternDetails(null);
+    }
+  };
+
   const handleOnboard = async () => {
     if (!selectedId) return;
+    setFormError('');
 
-    // Validate dates
     if (!formData.applicationNo || !formData.dateOfJoining || !formData.dateOfLeaving) {
-      alert('All fields are required');
+      setFormError('All fields are required');
       return;
     }
 
@@ -41,21 +57,19 @@ const PendingApplications: React.FC = () => {
     const leavingDate = new Date(formData.dateOfLeaving);
 
     if (joiningDate >= leavingDate) {
-      alert('Date of Leaving must be after Date of Joining');
+      setFormError('Date of Leaving must be after Date of Joining');
       return;
     }
 
     try {
-      await adminService.finalizeOnboarding({
-        id: selectedId,
-        ...formData,
-      });
-      alert('Intern onboarded successfully!');
+      await adminService.finalizeOnboarding({ id: selectedId, ...formData });
+      showSuccess('Intern onboarded successfully!');
       loadApplications();
       setSelectedId(null);
+      setInternDetails(null);
       setFormData({ applicationNo: '', dateOfJoining: '', dateOfLeaving: '' });
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to onboard intern');
+      showError(error.response?.data?.error || 'Failed to onboard intern');
     }
   };
 
@@ -85,9 +99,9 @@ const PendingApplications: React.FC = () => {
               <div className="card-actions">
                 <button
                   className="action-button"
-                  onClick={() => setSelectedId(app.id)}
+                  onClick={() => handleSelectIntern(app.id)}
                 >
-                  Approve & Onboard
+                  Approve &amp; Onboard
                 </button>
               </div>
             </div>
@@ -128,11 +142,31 @@ const PendingApplications: React.FC = () => {
                 required
               />
             </div>
+            {formError && <div className="error-message" style={{ marginBottom: 12 }}>{formError}</div>}
+
+            {/* Document Viewer */}
+            {internDetails && (
+              <div className="documents-section">
+                <h3>Submitted Documents</h3>
+                <div className="documents-grid">
+                  {internDetails.photoUrl && (
+                    <DocumentViewer type="image" url={internDetails.photoUrl} alt="Passport Photo" label="Passport Photo" />
+                  )}
+                  {internDetails.signUrl && (
+                    <DocumentViewer type="image" url={internDetails.signUrl} alt="E-Signature" label="E-Signature" />
+                  )}
+                  {internDetails.ndaUrl && (
+                    <DocumentViewer type="pdf" url={internDetails.ndaUrl} alt="Signed NDA" label="Signed NDA" />
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="modal-actions">
               <button onClick={handleOnboard} className="modal-submit-btn">
                 Approve
               </button>
-              <button onClick={() => setSelectedId(null)} className="modal-cancel-btn">
+              <button onClick={() => { setSelectedId(null); setInternDetails(null); setFormError(''); }} className="modal-cancel-btn">
                 Cancel
               </button>
             </div>

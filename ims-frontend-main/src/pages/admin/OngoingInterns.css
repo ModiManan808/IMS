@@ -184,3 +184,126 @@
   padding: 60px;
   color: #666;
 }
+
+/* ── Search Bar ──────────────────────────────────────── */
+.search-bar-wrapper {
+  position: relative;
+  margin-bottom: 24px;
+  max-width: 420px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.search-bar:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ── Statistics Cards ────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  padding: 20px 20px 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card-blue {
+  background: #eff6ff;
+  border-left: 5px solid #2563eb;
+}
+
+.stat-card-green {
+  background: #f0fdf4;
+  border-left: 5px solid #16a34a;
+}
+
+.stat-card-purple {
+  background: #faf5ff;
+  border-left: 5px solid #7c3aed;
+}
+
+.stat-card-orange {
+  background: #fff7ed;
+  border-left: 5px solid #ea580c;
+}
+
+.stat-card-icon {
+  opacity: 0.75;
+}
+
+.stat-card-blue .stat-card-icon {
+  color: #2563eb;
+}
+
+.stat-card-green .stat-card-icon {
+  color: #16a34a;
+}
+
+.stat-card-purple .stat-card-icon {
+  color: #7c3aed;
+}
+
+.stat-card-orange .stat-card-icon {
+  color: #ea580c;
+}
+
+.stat-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-card-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111;
+  line-height: 1;
+}
+
+.stat-card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

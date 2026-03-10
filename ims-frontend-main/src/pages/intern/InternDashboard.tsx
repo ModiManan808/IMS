@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { internService } from '../../services/internService';
 import { DailyReport } from '../../types';
-import { Calendar, CheckCircle, Clock, ClipboardList } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, ClipboardList, Pencil, X, Save, Lock } from 'lucide-react';
+import { useToast } from '../../hooks/useToast';
 import './InternDashboard.css';
 
 const InternDashboard: React.FC = () => {
@@ -15,6 +16,9 @@ const InternDashboard: React.FC = () => {
     toolsUsed: '',
     issuesFaced: '',
   });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editData, setEditData] = useState({ domain: '', workDescription: '', toolsUsed: '', issuesFaced: '' });
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     loadReports();
@@ -42,12 +46,40 @@ const InternDashboard: React.FC = () => {
     e.preventDefault();
     try {
       await internService.submitDailyReport(formData);
-      alert('Daily report submitted successfully!');
+      showSuccess('Daily report submitted successfully!');
       setFormData({ domain: '', workDescription: '', toolsUsed: '', issuesFaced: '' });
       setShowForm(false);
       loadReports();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to submit report');
+      showError(error.response?.data?.error || 'Failed to submit report');
+    }
+  };
+
+  const canEdit = (report: DailyReport): boolean => {
+    const ms = Date.now() - new Date(report.createdAt).getTime();
+    return ms < 24 * 60 * 60 * 1000;
+  };
+
+  const startEdit = (report: DailyReport) => {
+    setEditingId(report.id);
+    setEditData({
+      domain: report.domain,
+      workDescription: report.workDescription,
+      toolsUsed: report.toolsUsed || '',
+      issuesFaced: report.issuesFaced || '',
+    });
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async (reportId: number) => {
+    try {
+      await internService.updateReport(reportId, editData);
+      showSuccess('Report updated successfully!');
+      setEditingId(null);
+      loadReports();
+    } catch (err: any) {
+      showError(err.response?.data?.error || 'Failed to update report');
     }
   };
 
@@ -171,17 +203,61 @@ const InternDashboard: React.FC = () => {
           <div className="dash-reports-grid">
             {reports.map((report) => (
               <div key={report.id} className="dash-report-card">
-                <div className="dash-report-header">
-                  <span className="dash-report-date">
-                    {new Date(report.reportDate).toLocaleDateString('en-IN', {
-                      day: 'numeric', month: 'short', year: 'numeric',
-                    })}
-                  </span>
-                  <span className="dash-report-domain">{report.domain}</span>
-                </div>
-                <p><strong>Work:</strong> {report.workDescription}</p>
-                {report.toolsUsed && <p><strong>Tools:</strong> {report.toolsUsed}</p>}
-                {report.issuesFaced && <p><strong>Issues:</strong> {report.issuesFaced}</p>}
+                {editingId === report.id ? (
+                  /* ── Edit mode ─────────────── */
+                  <div className="dash-edit-mode">
+                    <div className="dash-edit-header">
+                      <span>Editing Report</span>
+                      <div className="dash-edit-actions">
+                        <button className="dash-save-btn" onClick={() => saveEdit(report.id)}><Save size={14} /> Save</button>
+                        <button className="dash-cancel-btn" onClick={cancelEdit}><X size={14} /> Cancel</button>
+                      </div>
+                    </div>
+                    <div className="dash-form-group">
+                      <label>Domain *</label>
+                      <input value={editData.domain} onChange={e => setEditData({ ...editData, domain: e.target.value })} required />
+                    </div>
+                    <div className="dash-form-group">
+                      <label>Work Description *</label>
+                      <textarea rows={4} value={editData.workDescription} onChange={e => setEditData({ ...editData, workDescription: e.target.value })} required />
+                    </div>
+                    <div className="dash-form-row">
+                      <div className="dash-form-group">
+                        <label>Tools Used</label>
+                        <textarea rows={2} value={editData.toolsUsed} onChange={e => setEditData({ ...editData, toolsUsed: e.target.value })} />
+                      </div>
+                      <div className="dash-form-group">
+                        <label>Issues Faced</label>
+                        <textarea rows={2} value={editData.issuesFaced} onChange={e => setEditData({ ...editData, issuesFaced: e.target.value })} />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── View mode ─────────────── */
+                  <>
+                    <div className="dash-report-header">
+                      <span className="dash-report-date">
+                        {new Date(report.reportDate).toLocaleDateString('en-IN', {
+                          day: 'numeric', month: 'short', year: 'numeric',
+                        })}
+                      </span>
+                      <span className="dash-report-domain">{report.domain}</span>
+                      {canEdit(report) ? (
+                        <button className="dash-edit-btn" onClick={() => startEdit(report)} aria-label="Edit report">
+                          <Pencil size={13} /> Edit
+                        </button>
+                      ) : (
+                        <span className="dash-edit-locked" title="Edit window closed (24h)"><Lock size={13} /></span>
+                      )}
+                    </div>
+                    {(report as any).editedAt && (
+                      <div className="dash-edited-badge">✏ Edited</div>
+                    )}
+                    <p><strong>Work:</strong> {report.workDescription}</p>
+                    {report.toolsUsed && <p><strong>Tools:</strong> {report.toolsUsed}</p>}
+                    {report.issuesFaced && <p><strong>Issues:</strong> {report.issuesFaced}</p>}
+                  </>
+                )}
               </div>
             ))}
           </div>

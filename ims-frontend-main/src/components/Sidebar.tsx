@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const isAdmin = user?.role === 'Admin';
 
   const adminMenuItems: { path: string; label: string; icon: React.ReactNode }[] = [
-    { path: '/admin/fresh', label: 'NEW Fresh', icon: <FileText size={18} aria-hidden="true" /> },
+    { path: '/admin/fresh', label: 'New Application', icon: <FileText size={18} aria-hidden="true" /> },
     { path: '/admin/pending', label: 'Pending', icon: <Clock size={18} aria-hidden="true" /> },
     { path: '/admin/ongoing', label: 'Approved & Ongoing', icon: <CheckCircle size={18} aria-hidden="true" /> },
     { path: '/admin/rejected', label: 'Rejected', icon: <XCircle size={18} aria-hidden="true" /> },

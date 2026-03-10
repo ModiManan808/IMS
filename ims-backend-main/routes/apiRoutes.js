@@ -26,10 +26,10 @@ const makeLimit = (max, windowMinutes = 15) =>
   });
 
 // Stricter in production, relaxed in development for convenience
-const loginLimiter         = makeLimit(IS_PROD ? 5  : 50,  15);
-const passwordResetLimiter = makeLimit(IS_PROD ? 3  : 20,  15);
-const changePasswordLimiter= makeLimit(IS_PROD ? 5  : 20,  15);
-const applicationLimiter   = makeLimit(IS_PROD ? 10 : 100, 60); // 10 apps/hr in prod
+const loginLimiter = makeLimit(IS_PROD ? 5 : 50, 15);
+const passwordResetLimiter = makeLimit(IS_PROD ? 3 : 20, 15);
+const changePasswordLimiter = makeLimit(IS_PROD ? 5 : 20, 15);
+const applicationLimiter = makeLimit(IS_PROD ? 10 : 100, 60); // 10 apps/hr in prod
 
 // ── Public routes ─────────────────────────────────────────────────────────────
 
@@ -50,8 +50,8 @@ router.post(
   '/enroll/:id',
   upload.fields([
     { name: 'photo', maxCount: 1 },
-    { name: 'sign',  maxCount: 1 },
-    { name: 'nda',   maxCount: 1 },
+    { name: 'sign', maxCount: 1 },
+    { name: 'nda', maxCount: 1 },
   ]),
   internCtrl.submitEnrollment
 );
@@ -66,23 +66,25 @@ router.post('/logout', auth(), authCtrl.logout);
 
 // ── Admin routes ──────────────────────────────────────────────────────────────
 
-router.get('/admin/dashboard/fresh',     auth('Admin'), adminCtrl.getFreshApplications);
-router.get('/admin/dashboard/pending',   auth('Admin'), adminCtrl.getPendingApplications);
-router.get('/admin/dashboard/ongoing',   auth('Admin'), adminCtrl.getOngoingInterns);
-router.get('/admin/dashboard/rejected',  auth('Admin'), adminCtrl.getRejectedApplications);
+router.get('/admin/dashboard/fresh', auth('Admin'), adminCtrl.getFreshApplications);
+router.get('/admin/dashboard/pending', auth('Admin'), adminCtrl.getPendingApplications);
+router.get('/admin/dashboard/ongoing', auth('Admin'), adminCtrl.getOngoingInterns);
+router.get('/admin/dashboard/rejected', auth('Admin'), adminCtrl.getRejectedApplications);
 router.get('/admin/dashboard/completed', auth('Admin'), adminCtrl.getCompletedInterns);
 
-router.post('/admin/decision',           auth('Admin'), adminCtrl.decideOnFresh);
-router.post('/admin/onboard',            auth('Admin'), adminCtrl.finalizeOnboarding);
-router.post('/admin/verify-loi',         auth('Admin'), adminCtrl.verifyLOI);
+router.post('/admin/decision', auth('Admin'), adminCtrl.decideOnFresh);
+router.post('/admin/onboard', auth('Admin'), adminCtrl.finalizeOnboarding);
+router.post('/admin/verify-loi', auth('Admin'), adminCtrl.verifyLOI);
 
-router.get('/admin/intern/:id',          auth('Admin'), adminCtrl.getInternDetails);
+router.get('/admin/intern/:id', auth('Admin'), adminCtrl.getInternDetails);
+router.get('/admin/reports/statistics', auth('Admin'), adminCtrl.getReportStatistics);
 
 // ── Intern routes ─────────────────────────────────────────────────────────────
 
-router.get('/intern/profile',  auth('Intern'), internCtrl.getMyProfile);
-router.get('/intern/reports',  auth('Intern'), internCtrl.getMyReports);
-router.post('/intern/report',  auth('Intern'), internCtrl.submitDailyReport);
+router.get('/intern/profile', auth('Intern'), internCtrl.getMyProfile);
+router.get('/intern/reports', auth('Intern'), internCtrl.getMyReports);
+router.post('/intern/report', auth('Intern'), internCtrl.submitDailyReport);
+router.put('/intern/report/:reportId', auth('Intern'), internCtrl.updateReport);
 
 // ── Secure file downloads ─────────────────────────────────────────────────────
 // Any authenticated user can request — fileCtrl enforces per-role permissions

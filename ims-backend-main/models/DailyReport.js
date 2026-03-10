@@ -2,8 +2,8 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const DailyReport = sequelize.define('DailyReport', {
-    internId: { 
-        type: DataTypes.INTEGER, 
+    internId: {
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: 'Interns',
@@ -16,7 +16,9 @@ const DailyReport = sequelize.define('DailyReport', {
     workDescription: { type: DataTypes.TEXT, allowNull: false }, // Work description with time
     toolsUsed: { type: DataTypes.TEXT }, // Tools used with time of usage
     issuesFaced: { type: DataTypes.TEXT }, // Issues faced/remarks
-    reportDate: { type: DataTypes.DATEONLY, defaultValue: DataTypes.NOW }
+    reportDate: { type: DataTypes.DATEONLY, defaultValue: DataTypes.NOW },
+    editedAt: { type: DataTypes.DATE, allowNull: true },
+    editCount: { type: DataTypes.INTEGER, defaultValue: 0 },
 }, {
     timestamps: true
 });

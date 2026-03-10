@@ -75,6 +75,16 @@ exports.login = async (req, res) => {
           logger.info('Inactive intern login attempt', { applicationNo: username, ip: req.ip });
           return res.status(403).json({ error: 'Your account is not active. Contact administrator.' });
         }
+        // Prevent login before the internship start date
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        const joiningDate = new Date(user.dateOfJoining);
+        joiningDate.setHours(0, 0, 0, 0);
+        if (joiningDate > todayDate) {
+          const formatted = joiningDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          logger.info('Intern login before start date', { applicationNo: username, dateOfJoining: user.dateOfJoining, ip: req.ip });
+          return res.status(403).json({ error: `Your internship begins on ${formatted}. Login will be available from that date.` });
+        }
         role = user.role;
       }
     }

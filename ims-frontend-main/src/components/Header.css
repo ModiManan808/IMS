@@ -1,14 +1,18 @@
 .header {
-  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-  color: white;
-  padding: 15px 30px;
+  background: #ffffff;
+  color: #1a237e;
+  padding: 10px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  /* Soft premium shadow */
   position: sticky;
   top: 0;
   z-index: 1000;
+  min-height: 80px;
+  border-bottom: 1px solid #e0e0e0;
+  /* Clean separation */
 }
 
 .header-left {
@@ -18,12 +22,11 @@
 }
 
 .nfsu-logo {
-  height: 60px;
+  height: 110px;
+  /* Made substantially bigger to match official site proportions */
   width: auto;
-  background: white;
-  border-radius: 6px;
-  padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  /* Removed white box/border/shadow so it blends with the white header */
+  background: transparent;
 }
 
 .nfsu-info h1 {
@@ -44,45 +47,39 @@
 }
 
 .header-center {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
-  max-width: 500px;
-  margin: 0 20px;
+  align-items: center;
+  pointer-events: none;
+  /* Let clicks pass through if it overlaps slightly */
+  z-index: 10;
 }
 
-.search-bar {
-  position: relative;
-  width: 100%;
-}
-
-.search-bar input {
-  width: 100%;
-  padding: 10px 40px 10px 15px;
-  border: none;
-  border-radius: 25px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 14px;
-}
-
-.search-bar input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.search-icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: white;
+.header-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a237e;
+  /* Dark blue text to contrast with white header */
+  letter-spacing: 0.4px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 15px;
+}
+
+.coecs-logo {
+  height: 70px;
+  /* Increased to match the larger scale */
+  width: auto;
+  background: transparent;
+  flex-shrink: 0;
 }
 
 .user-profile {
@@ -94,10 +91,13 @@
   padding: 5px 10px;
   border-radius: 20px;
   transition: background 0.3s;
+  color: #1a237e;
+  /* Ensure dropdown name is dark blue */
 }
 
 .user-profile:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  /* Darker hover for light background */
 }
 
 .profile-picture {
@@ -165,8 +165,11 @@
   }
 
   .header-center {
+    position: static;
+    transform: none;
     width: 100%;
-    max-width: none;
+    margin: 10px 0;
+    text-align: center;
   }
 
   .nfsu-info h1 {

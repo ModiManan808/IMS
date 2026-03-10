@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 import './ForgotPassword.css';
 
 const ForgotPassword: React.FC = () => {
     const navigate = useNavigate();
-    const [userType, setUserType] = useState<'admin' | 'intern'>('intern');
-    const [email, setEmail] = useState('');
     const [applicationNo, setApplicationNo] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -20,8 +19,8 @@ const ForgotPassword: React.FC = () => {
         try {
             const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5586';
             const payload = {
-                userType,
-                ...(userType === 'admin' ? { email } : { applicationNo })
+                userType: 'intern',
+                applicationNo,
             };
 
             await axios.post(`${API_URL}/api/request-password-reset`, payload);
@@ -36,6 +35,15 @@ const ForgotPassword: React.FC = () => {
 
     return (
         <div className="login-container">
+            <button
+                type="button"
+                className="back-home-btn"
+                onClick={() => navigate('/')}
+                aria-label="Back to home page"
+            >
+                <ChevronLeft size={16} aria-hidden="true" />
+                Back to Home
+            </button>
             <div className="login-background">
                 <div className="background-pattern"></div>
                 <div className="background-dots"></div>
@@ -78,59 +86,18 @@ const ForgotPassword: React.FC = () => {
                     ) : (
                         <form onSubmit={handleSubmit} className="login-form">
                             <p className="form-description">
-                                Select your account type and enter your {userType === 'admin' ? 'email address' : 'application number'}.
+                                Enter your application number to receive a password reset link.
                             </p>
 
-                            {/* User Type Selection */}
                             <div className="form-group">
-                                <label className="field-label" style={{ textTransform: 'none', fontSize: '15px' }}>I am a</label>
-                                <div className="radio-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '24px', marginTop: '4px' }}>
-                                    <label className="radio-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, lineHeight: '1' }}>
-                                        <input
-                                            type="radio"
-                                            name="userType"
-                                            value="admin"
-                                            checked={userType === 'admin'}
-                                            onChange={(e) => setUserType('admin')}
-                                            style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer', accentColor: '#d32f2f' }}
-                                        />
-                                        Admin
-                                    </label>
-                                    <label className="radio-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, lineHeight: '1' }}>
-                                        <input
-                                            type="radio"
-                                            name="userType"
-                                            value="intern"
-                                            checked={userType === 'intern'}
-                                            onChange={(e) => setUserType('intern')}
-                                            style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer', accentColor: '#d32f2f' }}
-                                        />
-                                        Intern
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* Conditional Input */}
-                            <div className="form-group">
-                                {userType === 'admin' ? (
-                                    <input
-                                        type="email"
-                                        placeholder="Email Address"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        className="form-input"
-                                    />
-                                ) : (
-                                    <input
-                                        type="text"
-                                        placeholder="Application Number (e.g., IMS2024001)"
-                                        value={applicationNo}
-                                        onChange={(e) => setApplicationNo(e.target.value)}
-                                        required
-                                        className="form-input"
-                                    />
-                                )}
+                                <input
+                                    type="text"
+                                    placeholder="Application Number (e.g., IMS2024001)"
+                                    value={applicationNo}
+                                    onChange={(e) => setApplicationNo(e.target.value)}
+                                    required
+                                    className="form-input"
+                                />
                             </div>
                             {error && <div className="error-message">{error}</div>}
                             <div className="form-actions">
