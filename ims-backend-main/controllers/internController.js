@@ -1,6 +1,8 @@
 const { Intern, DailyReport } = require('../models');
 const { validateMagicNumber } = require('../utils/fileValidator');
 const Validator = require('../utils/validator');
+const sendEmail = require('../utils/emailService');
+const logger = require('../utils/logger');
 
 /**
  * Get enrollment form data (for viewing the form)
@@ -99,6 +101,11 @@ exports.submitEnrollment = async (req, res) => {
 
         const sanitized = validation.sanitized;
 
+        // Capture old email BEFORE the update for notification
+        const oldEmail = intern.personalEmail;
+        const newEmail = sanitized.emailAddress;
+        const emailChanged = oldEmail && newEmail && newEmail.toLowerCase() !== oldEmail.toLowerCase();
+
         // Update intern record with sanitized data
         await intern.update({
             fullName: sanitized.fullName || intern.fullName,
@@ -118,6 +125,23 @@ exports.submitEnrollment = async (req, res) => {
             signedNDA: ndaPath,
             status: 'Pending_Approval' // Sends back to Admin
         });
+
+        // Notify old email AFTER DB commit — only fires if update succeeded
+        if (emailChanged) {
+            setImmediate(async () => {
+                try {
+                    await sendEmail(
+                        oldEmail,
+                        'Email Address Changed – IMS Portal',
+                        `Dear ${intern.fullName},\n\nThe email address associated with your IMS Portal account has been changed to: ${newEmail}\n\nIf you did not make this change, please contact the administrator immediately.\n\n– IMS Security Team`
+                    );
+                    logger.info('Email change notification sent', { internId: intern.id });
+                } catch (e) {
+                    logger.error('Failed to send email change notification', { internId: intern.id, message: e.message });
+                }
+            });
+        }
+
 
         res.json({ message: 'Enrollment submitted successfully' });
     } catch (error) {

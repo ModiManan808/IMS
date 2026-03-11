@@ -108,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
         </Link>
       </div>
       <div className="header-center">
-        <span className="header-title">Centre of Excellence Cyber Security - NFSU</span>
+        <span className="header-title">Centre of Excellence Cyber Security in NFSU</span>
       </div>
 
       <div className="header-right">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminService } from '../../services/adminService';
 import { OngoingIntern } from '../../types';
 import { Search } from 'lucide-react';
@@ -10,14 +10,28 @@ const CompletedInterns: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedIntern, setSelectedIntern] = useState<OngoingIntern | null>(null);
   const [search, setSearch] = useState('');
+  const searchInitialized = useRef(false);
 
   useEffect(() => {
     loadInterns();
   }, []);
 
-  const loadInterns = async () => {
+  useEffect(() => {
+    if (!searchInitialized.current) {
+      searchInitialized.current = true;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      loadInterns(search);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const loadInterns = async (query?: string) => {
     try {
-      const response = await adminService.getCompletedInterns();
+      const response = await adminService.getCompletedInterns(query);
       setInterns(response.data);
     } catch (error) {
       console.error('Error loading interns:', error);
@@ -25,11 +39,6 @@ const CompletedInterns: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const filtered = interns.filter((i) =>
-    i.name.toLowerCase().includes(search.toLowerCase()) ||
-    i.applicationNo?.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -51,11 +60,11 @@ const CompletedInterns: React.FC = () => {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {interns.length === 0 ? (
         <div className="empty-state">{search ? 'No interns match your search' : 'No completed interns'}</div>
       ) : (
         <div className="interns-list">
-          {filtered.map((intern) => (
+          {interns.map((intern) => (
             <div
               key={intern.id}
               className="intern-card"

@@ -7,11 +7,31 @@ const fs = require('fs');
 const Validator = require('../utils/validator');
 const logger = require('../utils/logger');
 
+const buildInternSearchCondition = (query, fields) => {
+    const q = (query || '').toString().trim();
+    if (!q) return null;
+
+    return {
+        [Op.or]: fields.map((field) => ({
+            [field]: { [Op.like]: `%${q}%` }
+        }))
+    };
+};
+
 // Tab 1: Fresh Applications
 exports.getFreshApplications = async (req, res) => {
     try {
+        const searchCondition = buildInternSearchCondition(req.query.q, [
+            'fullName',
+            'enrollmentNo',
+            'personalEmail'
+        ]);
+
         const interns = await Intern.findAll({
-            where: { status: 'Fresh' },
+            where: {
+                status: 'Fresh',
+                ...(searchCondition || {})
+            },
             order: [['createdAt', 'DESC']],
             attributes: [
                 'id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo', 'loiFile',
@@ -134,8 +154,18 @@ exports.decideOnFresh = async (req, res) => {
 // Tab 2: Pending Applications (Waiting for Admin to add Application No, Dates)
 exports.getPendingApplications = async (req, res) => {
     try {
+        const searchCondition = buildInternSearchCondition(req.query.q, [
+            'fullName',
+            'enrollmentNo',
+            'personalEmail',
+            'applicationNo'
+        ]);
+
         const interns = await Intern.findAll({
-            where: { status: 'Pending_Approval' },
+            where: {
+                status: 'Pending_Approval',
+                ...(searchCondition || {})
+            },
             order: [['updatedAt', 'DESC']],
             attributes: [
                 'id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo',
@@ -263,10 +293,18 @@ exports.getOngoingInterns = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        const searchCondition = buildInternSearchCondition(req.query.q, [
+            'fullName',
+            'applicationNo',
+            'enrollmentNo',
+            'personalEmail'
+        ]);
+
         const interns = await Intern.findAll({
             where: {
                 status: 'Active',
-                dateOfJoining: { [Op.lte]: today }  // Only show interns whose internship has started
+                dateOfJoining: { [Op.lte]: today },  // Only show interns whose internship has started
+                ...(searchCondition || {})
             },
             include: [{
                 model: DailyReport,
@@ -284,7 +322,7 @@ exports.getOngoingInterns = async (req, res) => {
 
             // Calculate days since start
             const timeDiff = today - startDate;
-            const daysSinceStart = Math.max(1, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+            const daysSinceStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
 
             // Count unique days with reports
             const uniqueReportDates = new Set(intern.reports.map(r => r.reportDate ? String(r.reportDate).split('T')[0] : null).filter(Boolean));
@@ -356,7 +394,7 @@ exports.getInternDetails = async (req, res) => {
         startDate.setHours(0, 0, 0, 0);
 
         const timeDiff = today - startDate;
-        const daysSinceStart = Math.max(1, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+        const daysSinceStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
 
         const uniqueReportDates = new Set(intern.reports.map(r => r.reportDate?.toISOString().split('T')[0]));
         const daysAttended = uniqueReportDates.size;
@@ -389,8 +427,18 @@ exports.getInternDetails = async (req, res) => {
 // Tab 4: Rejected Applications
 exports.getRejectedApplications = async (req, res) => {
     try {
+        const searchCondition = buildInternSearchCondition(req.query.q, [
+            'fullName',
+            'enrollmentNo',
+            'personalEmail',
+            'applicationNo'
+        ]);
+
         const interns = await Intern.findAll({
-            where: { status: 'Rejected' },
+            where: {
+                status: 'Rejected',
+                ...(searchCondition || {})
+            },
             order: [['updatedAt', 'DESC']],
             attributes: [
                 'id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo',
@@ -410,8 +458,18 @@ exports.getCompletedInterns = async (req, res) => {
         const { checkAndUpdateCompletedInterns } = require('../utils/statusService');
         await checkAndUpdateCompletedInterns();
 
+        const searchCondition = buildInternSearchCondition(req.query.q, [
+            'fullName',
+            'applicationNo',
+            'enrollmentNo',
+            'personalEmail'
+        ]);
+
         const interns = await Intern.findAll({
-            where: { status: 'Completed' },
+            where: {
+                status: 'Completed',
+                ...(searchCondition || {})
+            },
             include: [{
                 model: DailyReport,
                 as: 'reports',

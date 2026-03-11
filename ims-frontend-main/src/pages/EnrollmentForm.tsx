@@ -31,20 +31,12 @@ const EnrollmentForm: React.FC = () => {
     sign: null as File | null,
     nda: null as File | null,
   });
-  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [fileErrors, setFileErrors] = useState({ photo: '', sign: '', nda: '' });
   const [contactError, setContactError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submittedName, setSubmittedName] = useState('');
-
-  // Cleanup object URL on unmount to avoid memory leaks
-  useEffect(() => {
-    return () => {
-      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-    };
-  }, [photoPreviewUrl]);
 
   const loadFormData = async () => {
     try {
@@ -114,12 +106,6 @@ const EnrollmentForm: React.FC = () => {
     // Clear error and store file
     setFileErrors({ ...fileErrors, [field]: '' });
     setFiles({ ...files, [field]: file });
-
-    // Generate preview for photo only
-    if (field === 'photo') {
-      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-      setPhotoPreviewUrl(URL.createObjectURL(file));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -278,15 +264,7 @@ const EnrollmentForm: React.FC = () => {
             {/* Passport Photo — with thumbnail preview */}
             <div className="form-group">
               <label>Passport Size Photo (JPG/PNG, max 1MB) *</label>
-              <div className="photo-upload-wrapper">
-                {photoPreviewUrl && (
-                  <img
-                    src={photoPreviewUrl}
-                    alt="Passport photo preview"
-                    className="photo-preview"
-                  />
-                )}
-                <input
+              <input
                   type="file"
                   accept=".jpg,.jpeg,.png"
                   onChange={handleFileChange('photo')}
@@ -294,7 +272,6 @@ const EnrollmentForm: React.FC = () => {
                   aria-invalid={!!fileErrors.photo}
                   required
                 />
-              </div>
               {fileErrors.photo && (
                 <span id="photo-error" className="field-error" role="alert">
                   {fileErrors.photo}

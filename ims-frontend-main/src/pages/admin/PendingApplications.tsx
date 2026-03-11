@@ -149,9 +149,6 @@ const PendingApplications: React.FC = () => {
               <div className="documents-section">
                 <h3>Submitted Documents</h3>
                 <div className="documents-grid">
-                  {internDetails.photoUrl && (
-                    <DocumentViewer type="image" url={internDetails.photoUrl} alt="Passport Photo" label="Passport Photo" />
-                  )}
                   {internDetails.signUrl && (
                     <DocumentViewer type="image" url={internDetails.signUrl} alt="E-Signature" label="E-Signature" />
                   )}

@@ -21,24 +21,34 @@ export interface LOIVerificationRequest {
 }
 
 export const adminService = {
-  getFreshApplications: async () => {
-    return api.get('/admin/dashboard/fresh');
+  getFreshApplications: async (q?: string) => {
+    return api.get('/admin/dashboard/fresh', {
+      params: q?.trim() ? { q: q.trim() } : undefined,
+    });
   },
 
-  getPendingApplications: async () => {
-    return api.get('/admin/dashboard/pending');
+  getPendingApplications: async (q?: string) => {
+    return api.get('/admin/dashboard/pending', {
+      params: q?.trim() ? { q: q.trim() } : undefined,
+    });
   },
 
-  getOngoingInterns: async () => {
-    return api.get('/admin/dashboard/ongoing');
+  getOngoingInterns: async (q?: string) => {
+    return api.get('/admin/dashboard/ongoing', {
+      params: q?.trim() ? { q: q.trim() } : undefined,
+    });
   },
 
-  getRejectedApplications: async () => {
-    return api.get('/admin/dashboard/rejected');
+  getRejectedApplications: async (q?: string) => {
+    return api.get('/admin/dashboard/rejected', {
+      params: q?.trim() ? { q: q.trim() } : undefined,
+    });
   },
 
-  getCompletedInterns: async () => {
-    return api.get('/admin/dashboard/completed');
+  getCompletedInterns: async (q?: string) => {
+    return api.get('/admin/dashboard/completed', {
+      params: q?.trim() ? { q: q.trim() } : undefined,
+    });
   },
 
   decideOnFresh: async (data: AdminDecisionRequest) => {

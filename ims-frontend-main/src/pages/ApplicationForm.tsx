@@ -80,9 +80,6 @@ const ApplicationForm: React.FC = () => {
         loi: loiFile,
       });
       setSuccess(true);
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to submit application');
     } finally {
@@ -92,11 +89,22 @@ const ApplicationForm: React.FC = () => {
 
   if (success) {
     return (
-      <div className="application-success">
-        <div className="success-content">
-          <h2><CheckCircle size={28} color="#4caf50" aria-hidden="true" /> Application Submitted Successfully!</h2>
-          <p>Your application has been received. You will receive an email once it's reviewed.</p>
-          <p>Redirecting to login...</p>
+      <div className="application-success-page">
+        <div className="application-success-card">
+          <div className="application-success-icon">
+            <CheckCircle size={56} strokeWidth={1.5} />
+          </div>
+          <h1>Application Submitted!</h1>
+          <p className="application-success-msg">
+            Thank you for applying for internship. Your application has been successfully submitted
+            and is now pending review by the CoE-CS administration team.
+          </p>
+          <p className="application-success-email-note">
+            You will receive an email with next steps once your application is reviewed.
+          </p>
+          <button className="application-goto-login-button" onClick={() => navigate('/login')}>
+            Go to Login
+          </button>
         </div>
       </div>
     );

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { Intern } from '../../types';
 import { CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { useToast } from '../../hooks/useToast';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import './FreshApplications.css';
 
 const FreshApplications: React.FC = () => {
@@ -14,6 +16,8 @@ const FreshApplications: React.FC = () => {
   const [specialNotes, setSpecialNotes] = useState('');
   const [loiVerified, setLoiVerified] = useState<'Pending' | 'Verified' | 'Rejected'>('Verified');
   const [loiNotes, setLoiNotes] = useState('');
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const { showSuccess, showError, showWarning } = useToast();
 
   useEffect(() => {
     loadApplications();
@@ -30,19 +34,8 @@ const FreshApplications: React.FC = () => {
     }
   };
 
-  const handleDecision = async () => {
+  const submitDecision = async () => {
     if (!selectedId) return;
-
-    // Require reason before rejecting
-    if (decision === 'Rejected') {
-      if (!rejectionReason.trim()) {
-        alert('Please provide a rejection reason. The intern will receive this in their email.');
-        return;
-      }
-      if (!window.confirm('Are you sure you want to reject this application? This action cannot be undone.')) {
-        return;
-      }
-    }
 
     setSubmitting(true);
     try {
@@ -52,14 +45,32 @@ const FreshApplications: React.FC = () => {
         rejectionReason: decision === 'Rejected' ? rejectionReason : undefined,
         specialApprovalNotes: decision === 'Special Approval Required' ? specialNotes : undefined,
       });
-      alert('Decision recorded successfully!');
+      showSuccess('Decision recorded successfully!');
       loadApplications();
       setSelectedId(null);
+      setRejectionReason('');
+      setSpecialNotes('');
+      setDecision('Approved'); // reset for next review
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to record decision');
+      showError(error.response?.data?.error || 'Failed to record decision');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDecision = async () => {
+    if (!selectedId) return;
+
+    if (decision === 'Rejected') {
+      if (!rejectionReason.trim()) {
+        showWarning('Please provide a rejection reason. The intern will receive this in their email.');
+        return;
+      }
+      setShowRejectConfirm(true);
+      return;
+    }
+
+    await submitDecision();
   };
 
   const handleLOIVerification = async () => {
@@ -75,10 +86,10 @@ const FreshApplications: React.FC = () => {
         loiVerified,
         loiVerificationNotes: loiNotes,
       });
-      alert('LOI verification status updated successfully!');
+      showSuccess('LOI verification status updated successfully!');
       loadApplications();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to verify LOI');
+      showError(error.response?.data?.error || 'Failed to verify LOI');
     } finally {
       setSubmitting(false);
     }
@@ -110,7 +121,7 @@ const FreshApplications: React.FC = () => {
       setTimeout(() => window.URL.revokeObjectURL(url), 100);
     } catch (error) {
       console.error('Error viewing LOI:', error);
-      alert('Failed to open LOI document');
+      showError('Failed to open LOI document');
     }
   };
 
@@ -131,9 +142,9 @@ const FreshApplications: React.FC = () => {
 
   return (
     <div className="fresh-applications">
-      <h1>Fresh Applications</h1>
+      <h1>New Applications</h1>
       {applications.length === 0 ? (
-        <div className="empty-state">No fresh applications</div>
+        <div className="empty-state">No new applications</div>
       ) : (
         <div className="applications-list">
           {applications.map((app) => (
@@ -282,6 +293,21 @@ const FreshApplications: React.FC = () => {
           </div>
         );
       })()}
+
+      {showRejectConfirm && (
+        <ConfirmDialog
+          title="Confirm Rejection"
+          message="Are you sure you want to reject this application? This action cannot be undone."
+          type="danger"
+          confirmText="Reject"
+          cancelText="Cancel"
+          onCancel={() => setShowRejectConfirm(false)}
+          onConfirm={async () => {
+            setShowRejectConfirm(false);
+            await submitDecision();
+          }}
+        />
+      )}
     </div>
   );
 };
