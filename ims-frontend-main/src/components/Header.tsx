@@ -94,6 +94,10 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
     navigate('/login');
   };
 
+  const toggleDropdown = () => {
+    setShowDropdown((prev) => !prev);
+  };
+
   const initials = user?.fullName?.charAt(0)?.toUpperCase() || 'U';
 
   return (
@@ -112,12 +116,18 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
         {!isPublic && (
           <div
             className="user-profile"
-            onClick={() => setShowDropdown(!showDropdown)}
+            onClick={toggleDropdown}
             role="button"
             aria-haspopup="true"
             aria-expanded={showDropdown}
+            aria-controls="header-user-menu"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setShowDropdown(!showDropdown)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleDropdown();
+              }
+            }}
           >
             <div className="profile-picture">
               {photoUrl ? (
@@ -133,15 +143,25 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
             <span className="user-name">{user?.fullName || 'User'}</span>
             <span className="dropdown-arrow">▼</span>
             {showDropdown && (
-              <div className="dropdown-menu">
+              <div className="dropdown-menu" id="header-user-menu" role="menu" aria-label="User menu">
                 {user?.role?.startsWith('Intern_') && (
-                  <div className="dropdown-item" onClick={() => navigate('/intern/profile')}>
+                  <button
+                    type="button"
+                    className="dropdown-item"
+                    role="menuitem"
+                    onClick={() => navigate('/intern/profile')}
+                  >
                     Profile
-                  </div>
+                  </button>
                 )}
-                <div className="dropdown-item" onClick={handleLogout}>
+                <button
+                  type="button"
+                  className="dropdown-item"
+                  role="menuitem"
+                  onClick={handleLogout}
+                >
                   Logout
-                </div>
+                </button>
               </div>
             )}
           </div>
