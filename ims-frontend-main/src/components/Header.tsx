@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import './Header.css';
 
@@ -24,7 +24,11 @@ async function fetchPhotoBlob(relativePath: string): Promise<string | null> {
   }
 }
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  isPublic?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(authService.getCurrentUser());
   const [showDropdown, setShowDropdown] = useState(false);
@@ -95,49 +99,53 @@ const Header: React.FC = () => {
   return (
     <header className="header">
       <div className="header-left">
-        <img src="/nfsu-logo.png" alt="NFSU Logo" className="nfsu-logo" />
+        <Link to="/" className="header-logo-link" aria-label="Go to home page">
+          <img src="/nfsu-logo.png" alt="NFSU Logo" className="nfsu-logo" />
+        </Link>
       </div>
       <div className="header-center">
-        <span className="header-title">Cyber Security Centre of Excellence &nbsp;–&nbsp; NFSU</span>
+        <span className="header-title">Centre of Excellence Cyber Security - NFSU</span>
       </div>
 
       <div className="header-right">
         <img src="/coecs-logo.png" alt="CoE-CS Logo" className="coecs-logo" />
-        <div
-          className="user-profile"
-          onClick={() => setShowDropdown(!showDropdown)}
-          role="button"
-          aria-haspopup="true"
-          aria-expanded={showDropdown}
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && setShowDropdown(!showDropdown)}
-        >
-          <div className="profile-picture">
-            {photoUrl ? (
-              <img
-                src={photoUrl}
-                alt={`${user?.fullName || 'User'}'s photo`}
-                className="profile-picture-img"
-              />
-            ) : (
-              initials
+        {!isPublic && (
+          <div
+            className="user-profile"
+            onClick={() => setShowDropdown(!showDropdown)}
+            role="button"
+            aria-haspopup="true"
+            aria-expanded={showDropdown}
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setShowDropdown(!showDropdown)}
+          >
+            <div className="profile-picture">
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt={`${user?.fullName || 'User'}'s photo`}
+                  className="profile-picture-img"
+                />
+              ) : (
+                initials
+              )}
+            </div>
+            <span className="user-name">{user?.fullName || 'User'}</span>
+            <span className="dropdown-arrow">▼</span>
+            {showDropdown && (
+              <div className="dropdown-menu">
+                {user?.role?.startsWith('Intern_') && (
+                  <div className="dropdown-item" onClick={() => navigate('/intern/profile')}>
+                    Profile
+                  </div>
+                )}
+                <div className="dropdown-item" onClick={handleLogout}>
+                  Logout
+                </div>
+              </div>
             )}
           </div>
-          <span className="user-name">{user?.fullName || 'User'}</span>
-          <span className="dropdown-arrow">▼</span>
-          {showDropdown && (
-            <div className="dropdown-menu">
-              {user?.role?.startsWith('Intern_') && (
-                <div className="dropdown-item" onClick={() => navigate('/intern/profile')}>
-                  Profile
-                </div>
-              )}
-              <div className="dropdown-item" onClick={handleLogout}>
-                Logout
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </header>
   );

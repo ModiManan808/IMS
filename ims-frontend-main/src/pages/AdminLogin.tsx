@@ -56,8 +56,12 @@ const AdminLogin: React.FC = () => {
 
     return (
         <div className="admin-login-container">
+            <div className="admin-login-background" aria-hidden="true">
+                <div className="admin-background-pattern"></div>
+                <div className="admin-background-dots"></div>
+                <div className="admin-background-hands"></div>
+            </div>
             <div className="admin-login-panel">
-                {/* Left branding side */}
                 <div className="admin-branding">
                     <div className="admin-branding-inner">
                         <img src="/nfsu-logo.png" alt="NFSU Logo" className="admin-logo" />
@@ -69,7 +73,6 @@ const AdminLogin: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Right form side */}
                 <div className="admin-form-side">
                     <div className="admin-form-header">
                         <div className="admin-icon-wrap">

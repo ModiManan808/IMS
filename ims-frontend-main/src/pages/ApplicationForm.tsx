@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, ChevronLeft } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { internService } from '../services/internService';
 import './ApplicationForm.css';
 
@@ -104,15 +104,6 @@ const ApplicationForm: React.FC = () => {
 
   return (
     <div className="application-form-container">
-      <button
-        type="button"
-        className="back-home-btn"
-        onClick={() => navigate('/')}
-        aria-label="Back to home page"
-      >
-        <ChevronLeft size={16} aria-hidden="true" />
-        Back to Home
-      </button>
       <div className="application-form">
         <h1>Internship Application</h1>
         <form onSubmit={handleSubmit}>

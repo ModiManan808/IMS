@@ -58,6 +58,13 @@ const AppContent: React.FC = () => {
   }, [sidebarOpen]);
 
   const isEnrollmentPage = location.pathname.startsWith('/enroll/');
+  const showPublicHeader = !authState.isAuthenticated && (
+    location.pathname === '/' ||
+    location.pathname === '/login' ||
+    location.pathname === '/forgot-password' ||
+    location.pathname === '/apply' ||
+    location.pathname.startsWith('/reset-password/')
+  );
   const showLayout = authState.isAuthenticated && authState.user && !isEnrollmentPage;
 
   return (
@@ -68,7 +75,8 @@ const AppContent: React.FC = () => {
           <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
         </>
       )}
-      <main className={`main-content ${showLayout ? 'with-layout' : ''}`}>
+      {showPublicHeader && <Header isPublic />}
+      <main className={`main-content ${showLayout ? 'with-layout' : ''} ${showPublicHeader ? 'with-public-header' : ''}`}>
         <Routes>
           <Route path="/" element={
             authState.isAuthenticated

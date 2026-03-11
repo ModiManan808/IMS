@@ -1,5 +1,5 @@
 .application-form-container {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--app-header-height));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,37 +104,6 @@
 }
 
 
-.back-home-btn {
-  position: absolute;
-  top: 24px;
-  left: 28px;
-  z-index: 10;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px 9px 12px;
-  background: #1a237e;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(26, 35, 126, 0.35);
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  letter-spacing: 0.2px;
-}
-
-.back-home-btn:hover {
-  background: #283593;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(26, 35, 126, 0.45);
-}
-
-.back-home-btn:active {
-  transform: translateY(0);
-}
-
 .field-error {
   color: #c62828;
   font-size: 12px;
@@ -144,11 +113,22 @@
 }
 
 .application-success {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--app-header-height));
   display: flex;
   align-items: center;
   justify-content: center;
   background: url('../assets/coe-cs-bg.jpeg') center center / cover no-repeat;
+}
+
+@media (max-width: 768px) {
+  .application-form-container,
+  .application-success {
+    padding: 16px;
+  }
+
+  .application-form {
+    padding: 28px 20px;
+  }
 }
 
 .success-content {

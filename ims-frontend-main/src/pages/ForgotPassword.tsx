@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 import './ForgotPassword.css';
 
@@ -35,15 +34,6 @@ const ForgotPassword: React.FC = () => {
 
     return (
         <div className="login-container">
-            <button
-                type="button"
-                className="back-home-btn"
-                onClick={() => navigate('/')}
-                aria-label="Back to home page"
-            >
-                <ChevronLeft size={16} aria-hidden="true" />
-                Back to Home
-            </button>
             <div className="login-background">
                 <div className="background-pattern"></div>
                 <div className="background-dots"></div>

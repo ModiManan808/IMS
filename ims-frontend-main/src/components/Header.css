@@ -1,82 +1,67 @@
 .header {
   background: #ffffff;
   color: #1a237e;
-  padding: 10px 30px;
-  display: flex;
-  justify-content: space-between;
+  padding: 8px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 18px;
   align-items: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  /* Soft premium shadow */
   position: sticky;
   top: 0;
   z-index: 1000;
-  min-height: 80px;
+  min-height: var(--app-header-height);
   border-bottom: 1px solid #e0e0e0;
-  /* Clean separation */
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 15px;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.header-logo-link {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
 }
 
 .nfsu-logo {
-  height: 110px;
-  /* Made substantially bigger to match official site proportions */
+  height: 72px;
+  max-width: 100%;
   width: auto;
-  /* Removed white box/border/shadow so it blends with the white header */
   background: transparent;
 }
 
-.nfsu-info h1 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.nfsu-info p {
-  margin: 2px 0;
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.institution-note {
-  font-size: 10px;
-  opacity: 0.8;
-}
-
 .header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   align-items: center;
-  pointer-events: none;
-  /* Let clicks pass through if it overlaps slightly */
-  z-index: 10;
+  min-width: 0;
+  text-align: center;
+  grid-column: 2;
 }
 
 .header-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a237e;
-  /* Dark blue text to contrast with white header */
-  letter-spacing: 0.4px;
+  letter-spacing: 0.2px;
   text-align: center;
-  white-space: nowrap;
+  line-height: 1.25;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
 }
 
 .coecs-logo {
-  height: 70px;
-  /* Increased to match the larger scale */
+  height: 54px;
   width: auto;
   background: transparent;
   flex-shrink: 0;
@@ -92,12 +77,10 @@
   border-radius: 20px;
   transition: background 0.3s;
   color: #1a237e;
-  /* Ensure dropdown name is dark blue */
 }
 
 .user-profile:hover {
   background: rgba(0, 0, 0, 0.05);
-  /* Darker hover for light background */
 }
 
 .profile-picture {
@@ -160,19 +143,40 @@
 
 @media (max-width: 768px) {
   .header {
-    flex-direction: column;
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .header-left,
+  .header-center,
+  .header-right {
+    justify-content: center;
   }
 
   .header-center {
-    position: static;
-    transform: none;
     width: 100%;
-    margin: 10px 0;
     text-align: center;
   }
 
-  .nfsu-info h1 {
-    font-size: 14px;
+  .nfsu-logo {
+    height: 60px;
+  }
+
+  .coecs-logo {
+    height: 46px;
+  }
+
+  .header-title {
+    font-size: 15px;
+    white-space: normal;
+  }
+
+  .user-profile {
+    padding: 4px 8px;
+  }
+
+  .user-name {
+    font-size: 13px;
   }
 }
