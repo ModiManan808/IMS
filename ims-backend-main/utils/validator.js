@@ -241,14 +241,9 @@ class Validator {
             const joining = new Date(sanitized.dateOfJoining);
             const leaving = new Date(sanitized.dateOfLeaving);
 
-            // Get today at midnight (no time part) for fair comparison
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // Ensure start date is before end date
             joining.setHours(0, 0, 0, 0);
-
-            if (joining < today) {
-                errors.push('Date of joining cannot be in the past');
-            }
+            leaving.setHours(0, 0, 0, 0);
 
             if (leaving <= joining) {
                 errors.push('Date of leaving must be after date of joining');
@@ -320,6 +315,32 @@ class Validator {
 
         // Verification Notes (optional but sanitized)
         sanitized.loiVerificationNotes = Sanitizer.sanitizeText(data.loiVerificationNotes, 1000);
+
+        return {
+            valid: errors.length === 0,
+            sanitized,
+            errors
+        };
+    }
+
+    /**
+     * Validate admin update for intern end date
+     * @param {object} data - Update payload
+     * @returns {object} - { valid: boolean, sanitized: object, errors: array }
+     */
+    static validateInternDateUpdate(data) {
+        const errors = [];
+        const sanitized = {};
+
+        sanitized.id = Sanitizer.sanitizeId(data.id);
+        if (!sanitized.id) {
+            errors.push('Invalid intern ID');
+        }
+
+        sanitized.dateOfLeaving = Sanitizer.sanitizeDate(data.dateOfLeaving);
+        if (!sanitized.dateOfLeaving) {
+            errors.push('Invalid date of leaving (use YYYY-MM-DD format)');
+        }
 
         return {
             valid: errors.length === 0,

@@ -46,11 +46,11 @@ export const internService = {
     });
   },
 
-  getEnrollmentForm: async (id: string) => {
-    return api.get(`/enroll/${id}`);
+  getEnrollmentForm: async (token: string) => {
+    return api.get(`/enroll/${token}`);
   },
 
-  submitEnrollment: async (id: string, data: EnrollmentFormData) => {
+  submitEnrollment: async (token: string, data: EnrollmentFormData) => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value instanceof File) {
@@ -59,7 +59,7 @@ export const internService = {
         formData.append(key, value);
       }
     });
-    return api.post(`/enroll/${id}`, formData, {
+    return api.post(`/enroll/${token}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

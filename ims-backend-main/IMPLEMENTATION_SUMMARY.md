@@ -54,8 +54,8 @@ This document summarizes all the changes and implementations made to the Intern 
 #### Public Routes
 - ✅ `POST /api/apply` - Submit application
 - ✅ `POST /api/login` - Login
-- ✅ `GET /api/enroll/:id` - Get enrollment form
-- ✅ `POST /api/enroll/:id` - Submit enrollment
+- ✅ `GET /api/enroll/:token` - Get enrollment form
+- ✅ `POST /api/enroll/:token` - Submit enrollment
 
 #### Admin Routes (Protected)
 - ✅ `GET /api/admin/dashboard/fresh` - Fresh applications

@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const isAdmin = user?.role === 'Admin';
 
   const adminMenuItems: { path: string; label: string; icon: React.ReactNode }[] = [
-    { path: '/admin/fresh', label: 'New Application', icon: <FileText size={18} aria-hidden="true" /> },
+    { path: '/admin/newapplication', label: 'New Application', icon: <FileText size={18} aria-hidden="true" /> },
     { path: '/admin/pending', label: 'Pending', icon: <Clock size={18} aria-hidden="true" /> },
     { path: '/admin/ongoing', label: 'Approved & Ongoing', icon: <CheckCircle size={18} aria-hidden="true" /> },
     { path: '/admin/rejected', label: 'Rejected', icon: <XCircle size={18} aria-hidden="true" /> },
@@ -52,7 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
             <Link
               key={item.path}
               to={item.path}
-              className={`sidebar-item ${location.pathname === item.path || (item.path === '/admin/fresh' && location.pathname === '/admin') ? 'active' : ''}`}
+              className={`sidebar-item ${location.pathname === item.path || (item.path === '/admin/newapplication' && location.pathname === '/admin') ? 'active' : ''}`}
               onClick={() => window.innerWidth < 768 && onToggle()}
             >
               <span className="sidebar-icon" aria-hidden="true">{item.icon}</span>

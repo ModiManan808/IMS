@@ -43,13 +43,6 @@ const ForgotPassword: React.FC = () => {
                 <div className="login-branding">
                     <div className="nfsu-branding">
                         <img src="/nfsu-logo.png" alt="NFSU Logo" className="login-logo" />
-                        <div className="nfsu-text">
-                            <h2>National Forensic Sciences University</h2>
-                            <p>Knowledge | Wisdom | Fulfilment</p>
-                            <p className="institution">An Institution of National Importance</p>
-                            <p className="ministry">(Ministry of Home Affairs, Government of India)</p>
-                            <p className="sanskrit">विद्या अमृतं अश्नुते</p>
-                        </div>
                     </div>
                 </div>
                 <div className="login-form-container">

@@ -6,6 +6,15 @@ const path = require('path');
 const fs = require('fs');
 const Validator = require('../utils/validator');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
+
+const hashEnrollmentToken = (token) => {
+    const secret = process.env.ENROLLMENT_TOKEN_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('Enrollment token secret is not configured');
+    }
+    return crypto.createHmac('sha256', secret).update(token).digest('hex');
+};
 
 const buildInternSearchCondition = (query, fields) => {
     const q = (query || '').toString().trim();
@@ -66,14 +75,20 @@ exports.decideOnFresh = async (req, res) => {
         }
 
         if (decision === 'Approved') {
-            // Update status immediately (non-blocking)
+            // Generate one-time enrollment token and store only its hash
+            const enrollmentToken = crypto.randomBytes(32).toString('hex');
+            const enrollmentTokenHash = hashEnrollmentToken(enrollmentToken);
+
+            // Update status and token hash immediately
             intern.status = 'Pending_Enrollment';
+            intern.enrollmentTokenHash = enrollmentTokenHash;
+            intern.enrollmentSalt = null;
             await intern.save();
 
             // SECURITY: Send email in background (fire-and-forget)
             // This prevents slow SMTP servers from blocking the HTTP response
             const frontendUrl = process.env.FRONTEND_URL || 'https://portal.nfsu.ac.in';
-            const enrollmentLink = `${frontendUrl}/enroll/${intern.id}`;
+            const enrollmentLink = `${frontendUrl}/enroll/${enrollmentToken}`;
             const ndaPath = path.join(__dirname, '../uploads/nda/nda.pdf');
 
             // Fire-and-forget email sending
@@ -593,6 +608,62 @@ exports.getReportStatistics = async (req, res) => {
     } catch (error) {
         logger.error('Error in getReportStatistics', { error: error.message });
         res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+};
+
+/**
+ * Update Intern Dates - Admin can change end date, but start date is read-only
+ */
+exports.updateInternDates = async (req, res) => {
+    try {
+        if (Object.prototype.hasOwnProperty.call(req.body || {}, 'dateOfJoining')) {
+            return res.status(400).json({ error: 'Start date is read-only and cannot be changed once assigned' });
+        }
+
+        const validation = Validator.validateInternDateUpdate(req.body);
+
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: 'Invalid input data',
+                details: validation.errors
+            });
+        }
+
+        const { id, dateOfLeaving } = validation.sanitized;
+
+        const intern = await Intern.findByPk(id);
+        if (!intern) {
+            return res.status(404).json({ error: 'Intern not found' });
+        }
+
+        if (intern.status !== 'Active') {
+            return res.status(400).json({ error: 'Only active interns can have their end date updated' });
+        }
+
+        // Validate date logic: end date must be after start date
+        const joining = new Date(intern.dateOfJoining);
+        const leaving = new Date(dateOfLeaving);
+        
+        joining.setHours(0, 0, 0, 0);
+        leaving.setHours(0, 0, 0, 0);
+
+        if (leaving <= joining) {
+            return res.status(400).json({ error: 'End date must be after start date' });
+        }
+
+        intern.dateOfLeaving = dateOfLeaving;
+        await intern.save();
+
+        logger.info('Intern end date updated', {
+            internId: id,
+            newEndDate: dateOfLeaving,
+            updatedBy: req.user.id
+        });
+
+        res.json({ message: 'Intern end date updated successfully' });
+    } catch (error) {
+        logger.error('Error in updateInternDates', { error: error.message });
+        res.status(500).json({ error: 'An error occurred while updating dates' });
     }
 };
 

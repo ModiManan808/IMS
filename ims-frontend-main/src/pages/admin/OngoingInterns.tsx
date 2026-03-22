@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { adminService } from '../../services/adminService';
 import { OngoingIntern } from '../../types';
-import { Users, FileText, CalendarCheck, Search } from 'lucide-react';
+import { Users, FileText, CalendarCheck, Search, Edit2, Save, X } from 'lucide-react';
 import { formatDate } from '../../utils/dateFormat';
+import { ToastContext } from '../../context/ToastContext';
 import './OngoingInterns.css';
 
 interface Stats {
@@ -17,6 +18,10 @@ const OngoingInterns: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedIntern, setSelectedIntern] = useState<OngoingIntern | null>(null);
   const [search, setSearch] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editEndDate, setEditEndDate] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const { showSuccess, showError } = useContext(ToastContext);
   const searchInitialized = useRef(false);
   const requestSeq = useRef(0);
 
@@ -60,6 +65,38 @@ const OngoingInterns: React.FC = () => {
     } catch (error) {
       if (seq !== requestSeq.current) return;
       console.error('Error loading ongoing interns:', error);
+    }
+  };
+
+  const handleUpdateEndDate = async () => {
+    if (!selectedIntern || !editEndDate) return;
+
+    const startDate = new Date(selectedIntern.startDate);
+    const newEndDate = new Date(editEndDate);
+    startDate.setHours(0, 0, 0, 0);
+    newEndDate.setHours(0, 0, 0, 0);
+
+    if (newEndDate <= startDate) {
+      showError('End date must be after start date');
+      return;
+    }
+    
+    setUpdating(true);
+    try {
+      await adminService.updateInternDates({
+        id: selectedIntern.id,
+        dateOfLeaving: editEndDate
+      });
+      showSuccess('End date updated successfully');
+      setIsEditing(false);
+      // Update local state
+      const updatedIntern = { ...selectedIntern, endDate: editEndDate };
+      setSelectedIntern(updatedIntern);
+      setInterns(interns.map(i => i.id === selectedIntern.id ? updatedIntern : i));
+    } catch (err: any) {
+      showError(err.response?.data?.error || 'Failed to update end date');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -157,8 +194,38 @@ const OngoingInterns: React.FC = () => {
             <div className="details-section">
               <h3>{selectedIntern.name}</h3>
               <p><strong>Application No:</strong> {selectedIntern.applicationNo}</p>
-              <p><strong>Start Date:</strong> {formatDate(selectedIntern.startDate)}</p>
-              <p><strong>End Date:</strong> {formatDate(selectedIntern.endDate)}</p>
+              <p><strong>Start Date:</strong> {formatDate(selectedIntern.startDate)} <small>(Read-only)</small></p>
+              <div className="edit-date-row">
+                <p><strong>End Date:</strong> {isEditing ? (
+                  <input 
+                    type="date" 
+                    value={editEndDate} 
+                    onChange={(e) => setEditEndDate(e.target.value)}
+                    className="edit-date-input"
+                  />
+                ) : formatDate(selectedIntern.endDate)}</p>
+                {isEditing ? (
+                  <div className="edit-actions">
+                    <button onClick={handleUpdateEndDate} disabled={updating} className="save-date-btn" title="Save">
+                      <Save size={16} />
+                    </button>
+                    <button onClick={() => setIsEditing(false)} className="cancel-date-btn" title="Cancel">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setEditEndDate(selectedIntern.endDate.split('T')[0]);
+                      setIsEditing(true);
+                    }} 
+                    className="edit-date-btn"
+                    title="Edit End Date"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                )}
+              </div>
               <p><strong>Days Since Start:</strong> {selectedIntern.daysSinceStart}</p>
               <p><strong>Days Attended:</strong> {selectedIntern.daysAttended}</p>
               <p><strong>Attendance %:</strong> {selectedIntern.attendancePct}%</p>

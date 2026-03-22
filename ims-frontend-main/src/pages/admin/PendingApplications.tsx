@@ -124,20 +124,18 @@ const PendingApplications: React.FC = () => {
             </div>
             <div className="form-group">
               <label>Date of Joining *</label>
-              <input
+                <input
                 type="date"
                 value={formData.dateOfJoining}
-                min={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setFormData({ ...formData, dateOfJoining: e.target.value })}
                 required
               />
             </div>
             <div className="form-group">
               <label>Date of Leaving *</label>
-              <input
+                <input
                 type="date"
                 value={formData.dateOfLeaving}
-                min={formData.dateOfJoining || new Date().toISOString().split('T')[0]}
                 onChange={(e) => setFormData({ ...formData, dateOfLeaving: e.target.value })}
                 required
               />
@@ -149,6 +147,9 @@ const PendingApplications: React.FC = () => {
               <div className="documents-section">
                 <h3>Submitted Documents</h3>
                 <div className="documents-grid">
+                  {internDetails.photoUrl && (
+                    <DocumentViewer type="image" url={internDetails.photoUrl} alt="Passport Photo" label="Passport Photo" />
+                  )}
                   {internDetails.signUrl && (
                     <DocumentViewer type="image" url={internDetails.signUrl} alt="E-Signature" label="E-Signature" />
                   )}

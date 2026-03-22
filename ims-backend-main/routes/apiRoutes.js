@@ -44,10 +44,10 @@ router.post('/request-password-reset', passwordResetLimiter, authCtrl.requestPas
 router.get('/verify-reset-token/:token', authCtrl.verifyResetToken);
 router.post('/reset-password/:token', authCtrl.resetPassword);
 
-// Enrollment form (public URL sent by admin, secured by intern ID)
-router.get('/enroll/:id', internCtrl.getEnrollmentForm);
+// Enrollment form (public URL sent by admin, secured by hashed token)
+router.get('/enroll/:token', internCtrl.getEnrollmentForm);
 router.post(
-  '/enroll/:id',
+  '/enroll/:token',
   upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'sign', maxCount: 1 },
@@ -75,6 +75,7 @@ router.get('/admin/dashboard/completed', auth('Admin'), adminCtrl.getCompletedIn
 router.post('/admin/decision', auth('Admin'), adminCtrl.decideOnFresh);
 router.post('/admin/onboard', auth('Admin'), adminCtrl.finalizeOnboarding);
 router.post('/admin/verify-loi', auth('Admin'), adminCtrl.verifyLOI);
+router.put('/admin/update-dates', auth('Admin'), adminCtrl.updateInternDates);
 
 router.get('/admin/intern/:id', auth('Admin'), adminCtrl.getInternDetails);
 router.get('/admin/reports/statistics', auth('Admin'), adminCtrl.getReportStatistics);

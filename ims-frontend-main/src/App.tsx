@@ -80,30 +80,31 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={
             authState.isAuthenticated
-              ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/fresh' : '/intern/dashboard'} replace />
+              ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/newapplication' : '/intern/dashboard'} replace />
               : <HomePage />
           } />
-          <Route path="/login" element={authState.isAuthenticated ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/fresh' : '/intern/dashboard'} /> : <Login />} />
+          <Route path="/login" element={authState.isAuthenticated ? <Navigate to={authState.user?.role === 'Admin' ? '/admin/newapplication' : '/intern/dashboard'} /> : <Login />} />
           <Route path="/login/admin" element={
             authState.isAuthenticated && authState.user?.role === 'Admin'
-              ? <Navigate to="/admin/fresh" />
+              ? <Navigate to="/admin/newapplication" />
               : <AdminLogin />
           } />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/apply" element={<ApplicationForm />} />
-          <Route path="/enroll/:id" element={<EnrollmentForm />} />
+          <Route path="/enroll/:token" element={<EnrollmentForm />} />
 
           <Route path="/admin/dashboard" element={
             <ProtectedRoute allowedRoles={['Admin']}>
               <AdminDashboard />
             </ProtectedRoute>
           } />
-          <Route path="/admin/fresh" element={
+          <Route path="/admin/newapplication" element={
             <ProtectedRoute allowedRoles={['Admin']}>
               <FreshApplications />
             </ProtectedRoute>
           } />
+          <Route path="/admin/fresh" element={<Navigate to="/admin/newapplication" replace />} />
           <Route path="/admin/pending" element={
             <ProtectedRoute allowedRoles={['Admin']}>
               <PendingApplications />
@@ -138,7 +139,7 @@ const AppContent: React.FC = () => {
 
           <Route path="/admin" element={
             <ProtectedRoute allowedRoles={['Admin']}>
-              <Navigate to="/admin/fresh" replace />
+              <Navigate to="/admin/newapplication" replace />
             </ProtectedRoute>
           } />
 

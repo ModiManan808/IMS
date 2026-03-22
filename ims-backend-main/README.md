@@ -91,8 +91,8 @@ Backend API for the Intern Management System for NFSU's Centre of Excellence in 
 
 - `POST /api/apply` - Submit application
 - `POST /api/login` - Login (admin or intern)
-- `GET /api/enroll/:id` - Get enrollment form
-- `POST /api/enroll/:id` - Submit enrollment form
+- `GET /api/enroll/:token` - Get enrollment form
+- `POST /api/enroll/:token` - Submit enrollment form
 
 ### Admin Endpoints (Protected)
 

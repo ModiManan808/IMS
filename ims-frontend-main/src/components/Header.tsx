@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import './Header.css';
 
@@ -30,6 +30,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(authService.getCurrentUser());
   const [showDropdown, setShowDropdown] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -99,6 +100,15 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
   };
 
   const initials = user?.fullName?.charAt(0)?.toUpperCase() || 'U';
+  const showPublicBackButton = isPublic && ['/apply', '/login', '/forgot-password'].includes(location.pathname);
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate('/');
+  };
 
   return (
     <header className="header">
@@ -108,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
         </Link>
       </div>
       <div className="header-center">
-        <span className="header-title">Centre of Excellence Cyber Security in NFSU</span>
+        <span className="header-title">Centre of Excellence Cyber Security - NFSU</span>
       </div>
 
       <div className="header-right">
@@ -167,6 +177,11 @@ const Header: React.FC<HeaderProps> = ({ isPublic = false }) => {
           </div>
         )}
       </div>
+      {showPublicBackButton && (
+        <button type="button" className="header-back-btn header-back-btn-corner" onClick={handleBack} aria-label="Go back">
+          ← Back
+        </button>
+      )}
     </header>
   );
 };

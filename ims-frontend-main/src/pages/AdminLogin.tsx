@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
 import { authService } from '../services/authService';
@@ -19,6 +19,12 @@ const AdminLogin: React.FC = () => {
         errorTimerRef.current = setTimeout(() => setError(''), 30000);
     };
 
+    useEffect(() => {
+        return () => {
+            if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        };
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -34,8 +40,9 @@ const AdminLogin: React.FC = () => {
             setError('');
 
             if (user.role === 'Admin') {
-                navigate('/admin/fresh');
+                navigate('/admin/newapplication');
             } else {
+                authService.clearLocalSession();
                 showError('Access denied. Admin credentials required.');
             }
         } catch (err: any) {

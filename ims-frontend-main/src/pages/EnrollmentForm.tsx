@@ -10,7 +10,7 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
 const ALLOWED_PDF_TYPES = ['application/pdf'];
 
 const EnrollmentForm: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -40,7 +40,7 @@ const EnrollmentForm: React.FC = () => {
 
   const loadFormData = async () => {
     try {
-      const response = await internService.getEnrollmentForm(id!);
+      const response = await internService.getEnrollmentForm(token!);
       setFormData((prev) => ({
         ...prev,
         fullName: response.data.fullName,
@@ -53,11 +53,11 @@ const EnrollmentForm: React.FC = () => {
   };
 
   useEffect(() => {
-    if (id) {
+    if (token) {
       loadFormData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -127,7 +127,7 @@ const EnrollmentForm: React.FC = () => {
     setLoading(true);
 
     try {
-      await internService.submitEnrollment(id!, {
+      await internService.submitEnrollment(token!, {
         ...formData,
         photo: files.photo,
         sign: files.sign,

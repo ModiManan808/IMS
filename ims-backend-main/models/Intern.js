@@ -31,6 +31,8 @@ const Intern = sequelize.define('Intern', {
     },
     rejectionReason: { type: DataTypes.TEXT },
     specialApprovalNotes: { type: DataTypes.TEXT },
+    enrollmentSalt: { type: DataTypes.STRING },
+    enrollmentTokenHash: { type: DataTypes.STRING },
 
     // --- Phase 2: Enrollment Details ---
     passportPhoto: { type: DataTypes.STRING },

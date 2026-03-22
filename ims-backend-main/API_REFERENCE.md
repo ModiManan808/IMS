@@ -64,7 +64,7 @@ Authorization: Bearer <token>
 ---
 
 ### 3. Get Enrollment Form
-**GET** `/enroll/:id`
+**GET** `/enroll/:token`
 
 **Response:**
 ```json
@@ -79,7 +79,7 @@ Authorization: Bearer <token>
 ---
 
 ### 4. Submit Enrollment Form
-**POST** `/enroll/:id`
+**POST** `/enroll/:token`
 
 **Body (multipart/form-data):**
 - `fullName` (string)

@@ -163,7 +163,20 @@ exports.requestPasswordReset = async (req, res) => {
       identifier = email.trim();
     } else {
       user = await Intern.findOne({ where: { applicationNo: applicationNo.trim() } });
-      if (user) { userEmail = user.personalEmail; identifier = applicationNo.trim(); }
+      if (user) {
+        // Only active interns should be eligible for password reset
+        if (user.status !== 'Active' || user.role !== 'Intern_approved&ongoing') {
+          logger.info('Reset requested for inactive intern', {
+            applicationNo: applicationNo.trim(),
+            status: user.status,
+            role: user.role,
+          });
+          user = null;
+        } else {
+          userEmail = user.personalEmail;
+          identifier = applicationNo.trim();
+        }
+      }
     }
 
     // Always respond with the same message to prevent user enumeration

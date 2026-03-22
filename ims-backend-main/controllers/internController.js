@@ -3,27 +3,34 @@ const { validateMagicNumber } = require('../utils/fileValidator');
 const Validator = require('../utils/validator');
 const sendEmail = require('../utils/emailService');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
+
+const hashEnrollmentToken = (token) => {
+    const secret = process.env.ENROLLMENT_TOKEN_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('Enrollment token secret is not configured');
+    }
+    return crypto.createHmac('sha256', secret).update(token).digest('hex');
+};
 
 /**
  * Get enrollment form data (for viewing the form)
  */
 exports.getEnrollmentForm = async (req, res) => {
     try {
-        // Validate ID parameter
-        const validation = Validator.validateId(req.params.id);
+        const token = req.params.token;
+        const tokenHash = hashEnrollmentToken(token);
 
-        if (!validation.valid) {
-            return res.status(400).json({ error: 'Invalid ID parameter' });
-        }
-
-        const id = validation.sanitized;
-
-        const intern = await Intern.findByPk(id, {
+        const intern = await Intern.findOne({
+            where: {
+                status: 'Pending_Enrollment',
+                enrollmentTokenHash: tokenHash
+            },
             attributes: ['id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo', 'status']
         });
 
         if (!intern) {
-            return res.status(404).json({ error: 'Application not found' });
+            return res.status(404).json({ error: 'Application not found or link expired' });
         }
 
         if (intern.status !== 'Pending_Enrollment') {
@@ -48,14 +55,8 @@ exports.getEnrollmentForm = async (req, res) => {
  */
 exports.submitEnrollment = async (req, res) => {
     try {
-        // Validate ID parameter
-        const idValidation = Validator.validateId(req.params.id);
-
-        if (!idValidation.valid) {
-            return res.status(400).json({ error: 'Invalid ID parameter' });
-        }
-
-        const id = idValidation.sanitized;
+        const token = req.params.token;
+        const tokenHash = hashEnrollmentToken(token);
 
         if (!req.files || !req.files['photo'] || !req.files['sign'] || !req.files['nda']) {
             return res.status(400).json({
@@ -63,9 +64,15 @@ exports.submitEnrollment = async (req, res) => {
             });
         }
 
-        const intern = await Intern.findByPk(id);
+        const intern = await Intern.findOne({
+            where: {
+                status: 'Pending_Enrollment',
+                enrollmentTokenHash: tokenHash
+            }
+        });
+
         if (!intern) {
-            return res.status(404).json({ error: 'Application not found' });
+            return res.status(404).json({ error: 'Application not found or link expired' });
         }
 
         if (intern.status !== 'Pending_Enrollment') {
@@ -123,6 +130,8 @@ exports.submitEnrollment = async (req, res) => {
             permanentAddress: sanitized.permanentAddress,
             eSignature: signPath,
             signedNDA: ndaPath,
+            enrollmentTokenHash: null,
+            enrollmentSalt: null,
             status: 'Pending_Approval' // Sends back to Admin
         });
 

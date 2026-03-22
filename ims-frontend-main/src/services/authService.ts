@@ -51,6 +51,13 @@ export const authService = {
     }
   },
 
+  clearLocalSession: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sidebarOpen');
+    notifyAuthChange();
+  },
+
   getCurrentUser: () => {
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;

@@ -70,4 +70,7 @@ export const adminService = {
   getReportStatistics: async () => {
     return api.get('/admin/reports/statistics');
   },
+  updateInternDates: async (data: { id: number; dateOfLeaving: string }) => {
+    return api.put('/admin/update-dates', data);
+  },
 };

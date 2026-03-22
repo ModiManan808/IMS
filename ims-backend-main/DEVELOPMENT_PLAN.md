@@ -164,8 +164,8 @@ This document outlines the complete development plan for the Intern Management S
 ### Public Routes
 ```
 POST   /api/apply                    - Submit application
-GET    /api/enroll/:id               - Get enrollment form (by ID from email link)
-POST   /api/enroll/:id               - Submit enrollment form
+GET    /api/enroll/:token            - Get enrollment form (by secure token from email link)
+POST   /api/enroll/:token            - Submit enrollment form
 POST   /api/login                    - Login (admin or intern)
 ```
 
@@ -358,8 +358,8 @@ FRONTEND_URL=https://portal.nfsu.ac.in
 1. `POST /api/apply` - Submit application
 2. `GET /api/admin/dashboard/fresh` - Admin views fresh applications
 3. `POST /api/admin/decision` - Admin approves/rejects
-4. `GET /api/enroll/:id` - Intern views enrollment form
-5. `POST /api/enroll/:id` - Intern submits enrollment
+4. `GET /api/enroll/:token` - Intern views enrollment form
+5. `POST /api/enroll/:token` - Intern submits enrollment
 6. `GET /api/admin/dashboard/pending` - Admin views pending applications
 7. `POST /api/admin/onboard` - Admin finalizes onboarding
 8. `POST /api/login` - Intern logs in
