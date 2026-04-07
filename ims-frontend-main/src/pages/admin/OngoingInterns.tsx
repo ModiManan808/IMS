@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { adminService } from '../../services/adminService';
 import { OngoingIntern } from '../../types';
-import { Users, FileText, CalendarCheck, Search, Edit2, Save, X } from 'lucide-react';
+import { Users, FileText, CalendarCheck, Search, Edit2, Save, X, Mail, MailCheck, RefreshCw } from 'lucide-react';
 import { formatDate } from '../../utils/dateFormat';
 import { ToastContext } from '../../context/ToastContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import './OngoingInterns.css';
 
 interface Stats {
@@ -21,6 +22,8 @@ const OngoingInterns: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editEndDate, setEditEndDate] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [resendingId, setResendingId] = useState<number | null>(null);
+  const [pendingCredentialResend, setPendingCredentialResend] = useState<OngoingIntern | null>(null);
   const { showSuccess, showError } = useContext(ToastContext);
   const searchInitialized = useRef(false);
   const requestSeq = useRef(0);
@@ -98,6 +101,43 @@ const OngoingInterns: React.FC = () => {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const resendCredentialEmail = async (id: number) => {
+    setResendingId(id);
+    try {
+      const res = await adminService.resendEmail(id, 'credentials');
+      showSuccess(res.data.message || 'Credentials email resent successfully!');
+      await loadInterns(search);
+    } catch (err: any) {
+      showError(err.response?.data?.error || 'Failed to resend credentials email');
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const getCredentialEmailBadge = (intern: OngoingIntern) => {
+    const isSent = intern.credentialEmailSent || Boolean(intern.credentialEmailSentAt);
+
+    if (isSent) {
+      const sentDate = intern.credentialEmailSentAt
+        ? new Date(intern.credentialEmailSentAt).toLocaleDateString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+          })
+        : null;
+      return (
+        <span className="email-badge email-badge--sent" title={sentDate ? `Sent on ${sentDate}` : 'Credentials sent'}>
+          <MailCheck size={13} aria-hidden="true" />
+          Credentials Sent{sentDate ? <>&middot; {sentDate}</> : null}
+        </span>
+      );
+    }
+    return (
+      <span className="email-badge email-badge--unsent">
+        <Mail size={13} aria-hidden="true" />
+        Credentials Not Sent
+      </span>
+    );
   };
 
   if (loading) {
@@ -181,6 +221,21 @@ const OngoingInterns: React.FC = () => {
                   <span className="stat-value">{intern.attendancePct}%</span>
                 </div>
               </div>
+              <div className="card-email-row" onClick={(e) => e.stopPropagation()}>
+                {getCredentialEmailBadge(intern)}
+                <button
+                  className="resend-email-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingCredentialResend(intern);
+                  }}
+                  disabled={resendingId === intern.id}
+                  title="Resend credentials email (generates new password)"
+                >
+                  <RefreshCw size={13} aria-hidden="true" />
+                  {resendingId === intern.id ? 'Sending...' : 'Resend'}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -254,6 +309,23 @@ const OngoingInterns: React.FC = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {pendingCredentialResend && (
+        <ConfirmDialog
+          title="Resend credentials email?"
+          message={`This will generate a new password for ${pendingCredentialResend.name || pendingCredentialResend.hyperlinkText} and replace the current one once the email is sent. Continue?`}
+          type="warning"
+          confirmText="Resend"
+          cancelText="Cancel"
+          onCancel={() => setPendingCredentialResend(null)}
+          onConfirm={async () => {
+            const intern = pendingCredentialResend;
+            setPendingCredentialResend(null);
+            if (!intern) return;
+            await resendCredentialEmail(intern.id);
+          }}
+        />
       )}
     </div>
   );
