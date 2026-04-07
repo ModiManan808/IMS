@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { Intern } from '../../types';
-import { CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText, Mail, MailCheck, RefreshCw } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import './FreshApplications.css';
@@ -14,6 +14,7 @@ const FreshApplications: React.FC = () => {
   const [decision, setDecision] = useState<'Approved' | 'Rejected' | 'Special Approval Required'>('Approved');
   const [rejectionReason, setRejectionReason] = useState('');
   const [specialNotes, setSpecialNotes] = useState('');
+  const [resendingId, setResendingId] = useState<number | null>(null);
   const [loiVerified, setLoiVerified] = useState<'Pending' | 'Verified' | 'Rejected'>('Verified');
   const [loiNotes, setLoiNotes] = useState('');
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
@@ -125,6 +126,40 @@ const FreshApplications: React.FC = () => {
     }
   };
 
+  const handleResendAcceptanceEmail = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setResendingId(id);
+    try {
+      await adminService.resendEmail(id, 'acceptance');
+      showSuccess('Acceptance email resent! A fresh enrollment link has been sent.');
+      loadApplications();
+    } catch (error: any) {
+      showError(error.response?.data?.error || 'Failed to resend email');
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const getEmailBadge = (app: Intern) => {
+    if (app.acceptanceEmailSent && app.acceptanceEmailSentAt) {
+      const sentDate = new Date(app.acceptanceEmailSentAt).toLocaleDateString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+      return (
+        <span className="email-badge email-badge--sent" title={`Sent on ${sentDate}`}>
+          <MailCheck size={14} aria-hidden="true" />
+          Acceptance Email Sent &middot; {sentDate}
+        </span>
+      );
+    }
+    return (
+      <span className="email-badge email-badge--unsent">
+        <Mail size={14} aria-hidden="true" />
+        Email Not Sent
+      </span>
+    );
+  };
+
   const getLoiBadge = (status?: string) => {
     switch (status) {
       case 'Verified':
@@ -158,18 +193,35 @@ const FreshApplications: React.FC = () => {
                 <p><strong>Mobile:</strong> {app.mobileNo}</p>
                 <p><strong>Applied:</strong> {new Date(app.createdAt || '').toLocaleDateString()}</p>
                 {getLoiBadge(app.loiVerified)}
+                {app.status === 'Pending_Enrollment' && (
+                  <div style={{ marginTop: '12px' }}>
+                    {getEmailBadge(app)}
+                  </div>
+                )}
               </div>
               <div className="card-actions">
-                <button
-                  className="action-button"
-                  onClick={() => {
-                    setSelectedId(app.id);
-                    setLoiVerified(app.loiVerified || 'Pending');
-                    setLoiNotes(app.loiVerificationNotes || '');
-                  }}
-                >
-                  Review Application
-                </button>
+                {app.status === 'Fresh' ? (
+                  <button
+                    className="action-button"
+                    onClick={() => {
+                      setSelectedId(app.id);
+                      setLoiVerified(app.loiVerified || 'Pending');
+                      setLoiNotes(app.loiVerificationNotes || '');
+                    }}
+                  >
+                    Review Application
+                  </button>
+                ) : app.status === 'Pending_Enrollment' ? (
+                  <button
+                    className="resend-email-btn"
+                    onClick={(e) => handleResendAcceptanceEmail(app.id, e)}
+                    disabled={resendingId === app.id}
+                    title="Resend the enrollment link to this applicant"
+                  >
+                    <RefreshCw size={14} aria-hidden="true" />
+                    {resendingId === app.id ? 'Sending...' : 'Resend Email'}
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}

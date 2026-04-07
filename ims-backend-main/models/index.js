@@ -58,6 +58,34 @@ const initDB = async () => {
             allowNull: true,
         });
 
+        await ensureColumn(queryInterface, 'Interns', internColumns, 'enrollmentTokenExpiresAt', {
+            type: DataTypes.DATE,
+            allowNull: true,
+        });
+
+        // Email tracking fields
+        await ensureColumn(queryInterface, 'Interns', internColumns, 'acceptanceEmailSent', {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            allowNull: false,
+        });
+
+        await ensureColumn(queryInterface, 'Interns', internColumns, 'acceptanceEmailSentAt', {
+            type: DataTypes.DATE,
+            allowNull: true,
+        });
+
+        await ensureColumn(queryInterface, 'Interns', internColumns, 'credentialEmailSent', {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            allowNull: false,
+        });
+
+        await ensureColumn(queryInterface, 'Interns', internColumns, 'credentialEmailSentAt', {
+            type: DataTypes.DATE,
+            allowNull: true,
+        });
+
         console.log("✅ Database synced successfully");
     } catch (error) {
         console.error("❌ Database sync failed:", error.message);

@@ -4,6 +4,7 @@ const Validator = require('../utils/validator');
 const sendEmail = require('../utils/emailService');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 
 const hashEnrollmentToken = (token) => {
     const secret = process.env.ENROLLMENT_TOKEN_SECRET || process.env.JWT_SECRET;
@@ -20,11 +21,13 @@ exports.getEnrollmentForm = async (req, res) => {
     try {
         const token = req.params.token;
         const tokenHash = hashEnrollmentToken(token);
+        const now = new Date();
 
         const intern = await Intern.findOne({
             where: {
                 status: 'Pending_Enrollment',
-                enrollmentTokenHash: tokenHash
+                enrollmentTokenHash: tokenHash,
+                enrollmentTokenExpiresAt: { [Op.gt]: now }
             },
             attributes: ['id', 'fullName', 'enrollmentNo', 'personalEmail', 'mobileNo', 'status']
         });
@@ -57,6 +60,7 @@ exports.submitEnrollment = async (req, res) => {
     try {
         const token = req.params.token;
         const tokenHash = hashEnrollmentToken(token);
+        const now = new Date();
 
         if (!req.files || !req.files['photo'] || !req.files['sign'] || !req.files['nda']) {
             return res.status(400).json({
@@ -67,18 +71,14 @@ exports.submitEnrollment = async (req, res) => {
         const intern = await Intern.findOne({
             where: {
                 status: 'Pending_Enrollment',
-                enrollmentTokenHash: tokenHash
-            }
+                enrollmentTokenHash: tokenHash,
+                enrollmentTokenExpiresAt: { [Op.gt]: now }
+            },
+            attributes: ['id', 'fullName', 'personalEmail', 'enrollmentNo', 'mobileNo']
         });
 
         if (!intern) {
             return res.status(404).json({ error: 'Application not found or link expired' });
-        }
-
-        if (intern.status !== 'Pending_Enrollment') {
-            return res.status(400).json({
-                error: 'Enrollment is not available for this application'
-            });
         }
 
         const photoPath = req.files['photo'][0].path;
@@ -114,7 +114,7 @@ exports.submitEnrollment = async (req, res) => {
         const emailChanged = oldEmail && newEmail && newEmail.toLowerCase() !== oldEmail.toLowerCase();
 
         // Update intern record with sanitized data
-        await intern.update({
+        const [updatedRows] = await Intern.update({
             fullName: sanitized.fullName || intern.fullName,
             enrollmentNo: sanitized.enrollmentNo || intern.enrollmentNo,
             personalEmail: sanitized.emailAddress || intern.personalEmail,
@@ -131,9 +131,23 @@ exports.submitEnrollment = async (req, res) => {
             eSignature: signPath,
             signedNDA: ndaPath,
             enrollmentTokenHash: null,
+            enrollmentTokenExpiresAt: null,
             enrollmentSalt: null,
             status: 'Pending_Approval' // Sends back to Admin
+        }, {
+            where: {
+                id: intern.id,
+                status: 'Pending_Enrollment',
+                enrollmentTokenHash: tokenHash,
+                enrollmentTokenExpiresAt: { [Op.gt]: now }
+            }
         });
+
+        if (updatedRows === 0) {
+            return res.status(409).json({
+                error: 'Enrollment was already submitted or link expired. Please request a new enrollment link.'
+            });
+        }
 
         // Notify old email AFTER DB commit — only fires if update succeeded
         if (emailChanged) {
