@@ -30,6 +30,7 @@ const loginLimiter = makeLimit(IS_PROD ? 5 : 50, 15);
 const passwordResetLimiter = makeLimit(IS_PROD ? 3 : 20, 15);
 const changePasswordLimiter = makeLimit(IS_PROD ? 5 : 20, 15);
 const applicationLimiter = makeLimit(IS_PROD ? 10 : 100, 60); // 10 apps/hr in prod
+const enrollmentLimiter = makeLimit(IS_PROD ? 20 : 200, 15);
 
 // ── Public routes ─────────────────────────────────────────────────────────────
 
@@ -45,9 +46,10 @@ router.get('/verify-reset-token/:token', authCtrl.verifyResetToken);
 router.post('/reset-password/:token', authCtrl.resetPassword);
 
 // Enrollment form (public URL sent by admin, secured by hashed token)
-router.get('/enroll/:token', internCtrl.getEnrollmentForm);
+router.get('/enroll/:token', enrollmentLimiter, internCtrl.getEnrollmentForm);
 router.post(
   '/enroll/:token',
+  enrollmentLimiter,
   upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'sign', maxCount: 1 },
@@ -79,6 +81,7 @@ router.put('/admin/update-dates', auth('Admin'), adminCtrl.updateInternDates);
 
 router.get('/admin/intern/:id', auth('Admin'), adminCtrl.getInternDetails);
 router.get('/admin/reports/statistics', auth('Admin'), adminCtrl.getReportStatistics);
+router.post('/admin/resend-email', auth('Admin'), adminCtrl.resendEmail);
 
 // ── Intern routes ─────────────────────────────────────────────────────────────
 

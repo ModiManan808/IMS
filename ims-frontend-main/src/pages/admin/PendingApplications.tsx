@@ -3,6 +3,7 @@ import { adminService } from '../../services/adminService';
 import { Intern } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import DocumentViewer from '../../components/DocumentViewer';
+import { Mail, MailCheck, RefreshCw } from 'lucide-react';
 import './PendingApplications.css';
 
 const PendingApplications: React.FC = () => {
@@ -73,6 +74,27 @@ const PendingApplications: React.FC = () => {
     }
   };
 
+
+  const getEmailBadge = (app: Intern) => {
+    if (app.acceptanceEmailSent && app.acceptanceEmailSentAt) {
+      const sentDate = new Date(app.acceptanceEmailSentAt).toLocaleDateString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+      return (
+        <span className="email-badge email-badge--sent" title={`Sent on ${sentDate}`}>
+          <MailCheck size={14} aria-hidden="true" />
+          Acceptance Email Sent &middot; {sentDate}
+        </span>
+      );
+    }
+    return (
+      <span className="email-badge email-badge--unsent">
+        <Mail size={14} aria-hidden="true" />
+        Email Not Sent
+      </span>
+    );
+  };
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -95,6 +117,7 @@ const PendingApplications: React.FC = () => {
                 <p><strong>Program:</strong> {app.program}</p>
                 <p><strong>Department:</strong> {app.department}</p>
                 <p><strong>Semester:</strong> {app.semester}</p>
+                {getEmailBadge(app)}
               </div>
               <div className="card-actions">
                 <button
@@ -124,7 +147,7 @@ const PendingApplications: React.FC = () => {
             </div>
             <div className="form-group">
               <label>Date of Joining *</label>
-                <input
+              <input
                 type="date"
                 value={formData.dateOfJoining}
                 onChange={(e) => setFormData({ ...formData, dateOfJoining: e.target.value })}
@@ -133,7 +156,7 @@ const PendingApplications: React.FC = () => {
             </div>
             <div className="form-group">
               <label>Date of Leaving *</label>
-                <input
+              <input
                 type="date"
                 value={formData.dateOfLeaving}
                 onChange={(e) => setFormData({ ...formData, dateOfLeaving: e.target.value })}
@@ -142,7 +165,6 @@ const PendingApplications: React.FC = () => {
             </div>
             {formError && <div className="error-message" style={{ marginBottom: 12 }}>{formError}</div>}
 
-            {/* Document Viewer */}
             {internDetails && (
               <div className="documents-section">
                 <h3>Submitted Documents</h3>
@@ -164,7 +186,10 @@ const PendingApplications: React.FC = () => {
               <button onClick={handleOnboard} className="modal-submit-btn">
                 Approve
               </button>
-              <button onClick={() => { setSelectedId(null); setInternDetails(null); setFormError(''); }} className="modal-cancel-btn">
+              <button
+                onClick={() => { setSelectedId(null); setInternDetails(null); setFormError(''); }}
+                className="modal-cancel-btn"
+              >
                 Cancel
               </button>
             </div>

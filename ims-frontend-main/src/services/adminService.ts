@@ -73,4 +73,8 @@ export const adminService = {
   updateInternDates: async (data: { id: number; dateOfLeaving: string }) => {
     return api.put('/admin/update-dates', data);
   },
+
+  resendEmail: async (id: number, type: 'acceptance' | 'credentials') => {
+    return api.post('/admin/resend-email', { id, type });
+  },
 };

@@ -39,6 +39,11 @@ export interface Intern {
   eSignature?: string;
   signedNDA?: string;
   rejectionReason?: string;
+  // Email tracking
+  acceptanceEmailSent?: boolean;
+  acceptanceEmailSentAt?: string;
+  credentialEmailSent?: boolean;
+  credentialEmailSentAt?: string;
 }
 
 export interface DailyReport {
@@ -65,5 +70,7 @@ export interface OngoingIntern {
   daysAttended: number;
   attendancePct: number;
   totalDays?: number;
+  credentialEmailSent?: boolean;
+  credentialEmailSentAt?: string;
   reports: DailyReport[];
 }

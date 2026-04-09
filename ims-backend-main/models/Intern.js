@@ -33,6 +33,7 @@ const Intern = sequelize.define('Intern', {
     specialApprovalNotes: { type: DataTypes.TEXT },
     enrollmentSalt: { type: DataTypes.STRING },
     enrollmentTokenHash: { type: DataTypes.STRING },
+    enrollmentTokenExpiresAt: { type: DataTypes.DATE },
 
     // --- Phase 2: Enrollment Details ---
     passportPhoto: { type: DataTypes.STRING },
@@ -51,7 +52,13 @@ const Intern = sequelize.define('Intern', {
     applicationNo: { type: DataTypes.STRING, unique: true }, // Username
     password: { type: DataTypes.STRING }, // Hashed with bcrypt
     dateOfJoining: { type: DataTypes.DATEONLY },
-    dateOfLeaving: { type: DataTypes.DATEONLY }
+    dateOfLeaving: { type: DataTypes.DATEONLY },
+
+    // --- Email Tracking ---
+    acceptanceEmailSent: { type: DataTypes.BOOLEAN, defaultValue: false },
+    acceptanceEmailSentAt: { type: DataTypes.DATE },
+    credentialEmailSent: { type: DataTypes.BOOLEAN, defaultValue: false },
+    credentialEmailSentAt: { type: DataTypes.DATE }
 }, {
     timestamps: true
 });
